@@ -15,7 +15,7 @@ import {
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
-import { BaseEntity, LiveEvent } from '../database/asyncDatabase';
+import { BaseEntity, EventType, LiveEvent } from '../database/asyncDatabase';
 import { theme, typography } from '../styles/theme';
 
 // 日本語ロケール設定
@@ -29,12 +29,14 @@ LocaleConfig.locales['ja'] = {
 LocaleConfig.defaultLocale = 'ja';
 
 const LiveEventFormScreen = ({ navigation, route }: any) => {
-  const { artists, addLiveEvent, updateLiveEvent, liveEvents } = useApp();
+  const { artists, addLiveEvent, updateLiveEvent, liveEvents, getLiveEventArtists } = useApp();
   const editingEventId = route.params?.eventId;
   const editingEvent = editingEventId ? liveEvents.find(e => e.id === editingEventId) : null;
 
   const [title, setTitle] = useState('');
   const [artistId, setArtistId] = useState<string>('');
+  const [selectedArtistIds, setSelectedArtistIds] = useState<string[]>([]); // 複数アーティスト選択
+  const [eventType, setEventType] = useState<EventType>('single'); // イベントタイプ
   const [date, setDate] = useState(new Date());
   const [doorsOpen, setDoorsOpen] = useState<Date | null>(null);
   const [showStart, setShowStart] = useState<Date | null>(null);
@@ -68,6 +70,7 @@ const LiveEventFormScreen = ({ navigation, route }: any) => {
     if (editingEvent) {
       setTitle(editingEvent.title);
       setArtistId(editingEvent.artist_id || '');
+      setEventType(editingEvent.event_type || 'single');
       setDate(new Date(editingEvent.date));
       setDoorsOpen(parseTime(editingEvent.doors_open));
       setShowStart(parseTime(editingEvent.show_start));
@@ -77,8 +80,17 @@ const LiveEventFormScreen = ({ navigation, route }: any) => {
       setTicketPrice(editingEvent.ticket_price?.toString() || '');
       setSeatNumber(editingEvent.seat_number || '');
       setMemo(editingEvent.memo || '');
+      
+      // 複数アーティストの読み込み
+      getLiveEventArtists(editingEvent.id).then(eventArtists => {
+        if (eventArtists.length > 0) {
+          setSelectedArtistIds(eventArtists.map(ea => ea.artist_id));
+        } else if (editingEvent.artist_id) {
+          setSelectedArtistIds([editingEvent.artist_id]);
+        }
+      });
     }
-  }, [editingEvent]);
+  }, [editingEvent, getLiveEventArtists]);
 
   const handleSave = async () => {
     if (isSaving) return; // 二重タップ防止
@@ -87,7 +99,13 @@ const LiveEventFormScreen = ({ navigation, route }: any) => {
       Alert.alert('エラー', '公演名を入力してください');
       return;
     }
-    if (!artistId) {
+    
+    // イベントタイプに応じたバリデーション
+    const artistIdsToSave = eventType === 'single' 
+      ? (artistId ? [artistId] : [])
+      : selectedArtistIds;
+    
+    if (artistIdsToSave.length === 0) {
       Alert.alert('エラー', 'アーティストを選択してください');
       return;
     }
@@ -99,7 +117,7 @@ const LiveEventFormScreen = ({ navigation, route }: any) => {
     setIsSaving(true);
     const eventData: Omit<LiveEvent, keyof BaseEntity> = {
       title: title.trim(),
-      artist_id: artistId,
+      artist_id: artistIdsToSave[0] || '', // 後方互換: 最初のアーティストをメインに
       date: date.toISOString(),
       doors_open: formatTime(doorsOpen) || undefined,
       show_start: formatTime(showStart) || undefined,
@@ -109,13 +127,14 @@ const LiveEventFormScreen = ({ navigation, route }: any) => {
       ticket_price: ticketPrice ? parseFloat(ticketPrice) : undefined,
       seat_number: seatNumber.trim() || undefined,
       memo: memo.trim() || undefined,
+      event_type: eventType,
     };
 
     try {
       if (editingEvent) {
-        await updateLiveEvent(editingEvent.id!, eventData);
+        await updateLiveEvent(editingEvent.id!, eventData, artistIdsToSave);
       } else {
-        await addLiveEvent(eventData);
+        await addLiveEvent(eventData, artistIdsToSave);
       }
       navigation.goBack();
     } catch {
@@ -123,6 +142,28 @@ const LiveEventFormScreen = ({ navigation, route }: any) => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // アーティスト選択のトグル（複数選択用）
+  const toggleArtistSelection = (id: string) => {
+    setSelectedArtistIds(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(aid => aid !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  // アーティストの順序を入れ替え
+  const moveArtist = (index: number, direction: 'up' | 'down') => {
+    setSelectedArtistIds(prev => {
+      const newList = [...prev];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= newList.length) return prev;
+      [newList[index], newList[targetIndex]] = [newList[targetIndex]!, newList[index]!];
+      return newList;
+    });
   };
 
   const onCalendarDayPress = (day: any) => {
@@ -165,6 +206,12 @@ const LiveEventFormScreen = ({ navigation, route }: any) => {
     { label: '購入済み', value: 'purchased' },
   ];
 
+  const eventTypeOptions: { label: string; value: EventType; icon: string }[] = [
+    { label: 'ワンマン', value: 'single', icon: 'person' },
+    { label: '対バン', value: 'taiban', icon: 'people' },
+    { label: 'フェス', value: 'festival', icon: 'musical-notes' },
+  ];
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
@@ -193,6 +240,43 @@ const LiveEventFormScreen = ({ navigation, route }: any) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>基本情報</Text>
           
+          {/* イベントタイプ選択 */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>イベントタイプ</Text>
+            <View style={styles.eventTypeContainer}>
+              {eventTypeOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.eventTypeButton,
+                    eventType === option.value && styles.eventTypeButtonActive,
+                  ]}
+                  onPress={() => {
+                    setEventType(option.value);
+                    // タイプ変更時にアーティスト選択をリセット
+                    if (option.value === 'single' && selectedArtistIds.length > 0) {
+                      setArtistId(selectedArtistIds[0] || '');
+                    } else if (option.value !== 'single' && artistId) {
+                      setSelectedArtistIds([artistId]);
+                    }
+                  }}
+                >
+                  <Ionicons 
+                    name={option.icon as any} 
+                    size={20} 
+                    color={eventType === option.value ? theme.colors.text.inverse : theme.colors.text.secondary} 
+                  />
+                  <Text style={[
+                    styles.eventTypeButtonText,
+                    eventType === option.value && styles.eventTypeButtonTextActive,
+                  ]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>公演名 *</Text>
             <TextInput
@@ -205,7 +289,12 @@ const LiveEventFormScreen = ({ navigation, route }: any) => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>アーティスト *</Text>
+            <Text style={styles.label}>
+              アーティスト *
+              {eventType !== 'single' && (
+                <Text style={styles.labelHint}> （複数選択可・順序変更可）</Text>
+              )}
+            </Text>
             {artists.length === 0 && (
               <View style={styles.noArtistContainer}>
                 <Text style={styles.noArtistText}>アーティストが登録されていません</Text>
@@ -217,7 +306,9 @@ const LiveEventFormScreen = ({ navigation, route }: any) => {
                 </TouchableOpacity>
               </View>
             )}
-            {artists.length > 0 && (
+            
+            {/* ワンマン: 単一選択 */}
+            {artists.length > 0 && eventType === 'single' && (
               <View style={styles.pickerContainer}>
                 <Picker
                   selectedValue={artistId}
@@ -237,6 +328,73 @@ const LiveEventFormScreen = ({ navigation, route }: any) => {
                   <Ionicons name="add-circle-outline" size={20} color={theme.colors.accent} />
                   <Text style={styles.inlineAddButtonText}>追加</Text>
                 </TouchableOpacity>
+              </View>
+            )}
+            
+            {/* 対バン・フェス: 複数選択 */}
+            {artists.length > 0 && eventType !== 'single' && (
+              <View>
+                {/* 選択済みアーティスト（出演順） */}
+                {selectedArtistIds.length > 0 && (
+                  <View style={styles.selectedArtistsContainer}>
+                    <Text style={styles.selectedArtistsLabel}>出演順:</Text>
+                    {selectedArtistIds.map((id, index) => {
+                      const artist = artists.find(a => a.id === id);
+                      return (
+                        <View key={id} style={styles.selectedArtistItem}>
+                          <View style={styles.selectedArtistInfo}>
+                            <Text style={styles.selectedArtistOrder}>{index + 1}.</Text>
+                            <Text style={styles.selectedArtistName}>{artist?.name || 'Unknown'}</Text>
+                            {index === 0 && (
+                              <View style={styles.headlinerBadge}>
+                                <Text style={styles.headlinerBadgeText}>メイン</Text>
+                              </View>
+                            )}
+                          </View>
+                          <View style={styles.selectedArtistActions}>
+                            {index > 0 && (
+                              <TouchableOpacity onPress={() => moveArtist(index, 'up')} style={styles.moveButton}>
+                                <Ionicons name="chevron-up" size={20} color={theme.colors.accent} />
+                              </TouchableOpacity>
+                            )}
+                            {index < selectedArtistIds.length - 1 && (
+                              <TouchableOpacity onPress={() => moveArtist(index, 'down')} style={styles.moveButton}>
+                                <Ionicons name="chevron-down" size={20} color={theme.colors.accent} />
+                              </TouchableOpacity>
+                            )}
+                            <TouchableOpacity onPress={() => toggleArtistSelection(id)} style={styles.removeButton}>
+                              <Ionicons name="close-circle" size={22} color="#FF3B30" />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                )}
+                
+                {/* アーティスト選択リスト */}
+                <View style={styles.artistChecklistContainer}>
+                  <Text style={styles.artistChecklistLabel}>アーティストを選択:</Text>
+                  {artists.filter(a => !selectedArtistIds.includes(a.id)).map((artist) => (
+                    <TouchableOpacity
+                      key={artist.id}
+                      style={styles.artistChecklistItem}
+                      onPress={() => toggleArtistSelection(artist.id)}
+                    >
+                      <View style={styles.checkboxEmpty}>
+                        <Ionicons name="add" size={16} color={theme.colors.accent} />
+                      </View>
+                      <Text style={styles.artistChecklistName}>{artist.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                  <TouchableOpacity 
+                    style={styles.addNewArtistButton} 
+                    onPress={() => navigation.navigate('ArtistForm')}
+                  >
+                    <Ionicons name="add-circle-outline" size={20} color={theme.colors.accent} />
+                    <Text style={styles.addNewArtistButtonText}>新しいアーティストを追加</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
           </View>
@@ -679,6 +837,144 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
     overflow: 'hidden',
+  },
+  // イベントタイプ選択
+  eventTypeContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  eventTypeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.background,
+  },
+  eventTypeButtonActive: {
+    backgroundColor: theme.colors.accent,
+    borderColor: theme.colors.accent,
+  },
+  eventTypeButtonText: {
+    ...typography.body2,
+    color: theme.colors.text.secondary,
+  },
+  eventTypeButtonTextActive: {
+    color: theme.colors.text.inverse,
+    fontWeight: '600',
+  },
+  labelHint: {
+    ...typography.caption,
+    color: theme.colors.text.tertiary,
+    fontWeight: 'normal',
+  },
+  // 複数アーティスト選択
+  selectedArtistsContainer: {
+    marginBottom: 12,
+  },
+  selectedArtistsLabel: {
+    ...typography.label,
+    color: theme.colors.text.secondary,
+    marginBottom: 8,
+  },
+  selectedArtistItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.sm,
+    padding: 10,
+    marginBottom: 6,
+  },
+  selectedArtistInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  selectedArtistOrder: {
+    ...typography.body2,
+    color: theme.colors.text.tertiary,
+    marginRight: 8,
+    minWidth: 20,
+  },
+  selectedArtistName: {
+    ...typography.body1,
+    color: theme.colors.text.primary,
+    flex: 1,
+  },
+  headlinerBadge: {
+    backgroundColor: theme.colors.accent,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginLeft: 8,
+  },
+  headlinerBadgeText: {
+    ...typography.caption,
+    color: theme.colors.text.inverse,
+    fontWeight: '600',
+  },
+  selectedArtistActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  moveButton: {
+    padding: 4,
+  },
+  removeButton: {
+    padding: 4,
+    marginLeft: 4,
+  },
+  artistChecklistContainer: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.background,
+    padding: 12,
+  },
+  artistChecklistLabel: {
+    ...typography.label,
+    color: theme.colors.text.secondary,
+    marginBottom: 8,
+  },
+  artistChecklistItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  checkboxEmpty: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: theme.colors.accent,
+    borderRadius: 4,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  artistChecklistName: {
+    ...typography.body1,
+    color: theme.colors.text.primary,
+  },
+  addNewArtistButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  addNewArtistButtonText: {
+    ...typography.body2,
+    color: theme.colors.accent,
+    marginLeft: 8,
   },
 });
 

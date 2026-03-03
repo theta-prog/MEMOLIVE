@@ -1,26 +1,26 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  Image,
-  ImageStyle,
-  Modal,
-  Platform,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    Dimensions,
+    Image,
+    ImageStyle,
+    Modal,
+    Platform,
+    ScrollView,
+    Share,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { memoryService } from '../api/services';
 import ShareableMemoryCard from '../components/ShareableMemoryCard';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
-import { Memory } from '../database/asyncDatabase';
+import { ArtistSetlist, Memory } from '../database/asyncDatabase';
 import { confirmDelete } from '../utils/alert';
 import { captureViewAsImage, generateShareMessage, shareImage } from '../utils/share';
 
@@ -142,7 +142,7 @@ const PhotoCarousel = memo(function PhotoCarousel({
 });
 
 const MemoryDetailScreen = ({ navigation, route }: any) => {
-  const { memories, deleteMemory, liveEvents } = useApp();
+  const { memories, deleteMemory, liveEvents, artists, getArtistSetlists } = useApp();
   const { isAuthenticated } = useAuth();
   const memoryId = route.params?.memoryId;
   const memory = memories.find(m => m.id === memoryId);
@@ -155,6 +155,7 @@ const MemoryDetailScreen = ({ navigation, route }: any) => {
   const [isSharing, setIsSharing] = useState(false);
   const [isDownloadCompleteModalVisible, setIsDownloadCompleteModalVisible] = useState(false);
   const shareCardRef = useRef<View>(null);
+  const [artistSetlists, setArtistSetlists] = useState<(ArtistSetlist & { artistName: string })[]>([]);
   const initialShareSettings = useMemo(() => {
     // route.paramsから共有設定を取得（AppNavigatorでURLパラメータが処理済み）
     const shared = !!route.params?.shared;
@@ -213,6 +214,21 @@ const MemoryDetailScreen = ({ navigation, route }: any) => {
       cancelled = true;
     };
   }, [isSharedView, shareToken, sharedMemory]);
+
+  // アーティストごとのセットリストを取得
+  useEffect(() => {
+    if (memoryId && !isSharedView) {
+      getArtistSetlists(memoryId).then(async (setlists) => {
+        if (setlists.length > 0) {
+          const setlistsWithNames = setlists.map(s => ({
+            ...s,
+            artistName: artists.find(a => a.id === s.artist_id)?.name || 'Unknown',
+          }));
+          setArtistSetlists(setlistsWithNames);
+        }
+      });
+    }
+  }, [memoryId, isSharedView, getArtistSetlists, artists]);
 
   // Parse photos using useMemo
   const resolvedMemory = (sharedMemory || memory) as MemoryWithDetails | undefined;
@@ -1166,7 +1182,26 @@ const MemoryDetailScreen = ({ navigation, route }: any) => {
               </TouchableOpacity>
             )}
 
-            {resolvedMemory.setlist && (!isSharedView || showSetlist) && (
+            {/* アーティストごとのセットリスト（対バン・フェス用） */}
+            {artistSetlists.length > 0 && (!isSharedView || showSetlist) && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>セットリスト</Text>
+                {artistSetlists.map((setlist, index) => (
+                  <View key={setlist.id} style={styles.artistSetlistSection}>
+                    <View style={styles.artistSetlistHeader}>
+                      <Text style={styles.artistSetlistOrder}>{index + 1}.</Text>
+                      <Text style={styles.artistSetlistName}>{setlist.artistName}</Text>
+                    </View>
+                    <View style={styles.setlistContainer}>
+                      {renderSetlistLines(setlist.songs)}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* 従来のセットリスト（単一アーティスト用） */}
+            {resolvedMemory.setlist && artistSetlists.length === 0 && (!isSharedView || showSetlist) && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>セットリスト</Text>
                 <View style={styles.setlistContainer}>
@@ -1605,6 +1640,33 @@ const styles = StyleSheet.create({
     color: '#0095f6',
     fontSize: 12,
     fontWeight: '600',
+  },
+  // アーティストごとのセットリスト
+  artistSetlistSection: {
+    marginBottom: 16,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  artistSetlistHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  artistSetlistOrder: {
+    fontSize: 14,
+    color: '#888',
+    marginRight: 8,
+  },
+  artistSetlistName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
   },
 });
 

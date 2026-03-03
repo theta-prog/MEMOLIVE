@@ -195,12 +195,14 @@ describe('Database', () => {
 
       mockAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(mockEvents));
       mockAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(mockArtists));
+      mockAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify([])); // live_event_artists
 
       const result = await database.getLiveEventsWithArtists();
 
       expect(result[0]).toEqual({
         ...mockEvents[0],
         artist_name: mockArtists[0]!.name,
+        artist_names: [mockArtists[0]!.name],
       });
     });
 
@@ -245,6 +247,7 @@ describe('Database', () => {
 
       mockAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(mockEvents));
       mockAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(mockArtists));
+      mockAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify([])); // live_event_artists
 
       const result = await database.getUpcomingLiveEvents();
 
@@ -252,6 +255,7 @@ describe('Database', () => {
       expect(result[0]).toEqual({
         ...mockEvents[0],
         artist_name: mockArtists[0]!.name,
+        artist_names: [mockArtists[0]!.name],
       });
     });
   });
@@ -323,6 +327,7 @@ describe('Database', () => {
       mockAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(mockMemories));
       mockAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(mockEvents));
       mockAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(mockArtists));
+      mockAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify([])); // live_event_artists
 
       const result = await database.getMemoriesWithEventDetails();
 
@@ -330,6 +335,7 @@ describe('Database', () => {
         ...mockMemories[0],
         event_title: mockEvents[0]!.title,
         artist_name: mockArtists[0]!.name,
+        artist_names: [mockArtists[0]!.name],
         event_date: mockEvents[0]!.date,
       });
     });

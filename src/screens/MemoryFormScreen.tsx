@@ -17,8 +17,15 @@ import { useApp } from '../context/AppContext';
 import { BaseEntity, Memory } from '../database/asyncDatabase';
 import { calculateDaysUntil } from '../utils/index';
 
+// アーティストセットリストの型
+interface ArtistSetlistInput {
+  artistId: string;
+  artistName: string;
+  songs: string;
+}
+
 const MemoryFormScreen = ({ navigation, route }: any) => {
-  const { addMemory, updateMemory, memories, liveEvents } = useApp();
+  const { addMemory, updateMemory, memories, liveEvents, artists, getArtistSetlists, setArtistSetlists, getLiveEventArtists } = useApp();
   const initialEventId = route.params?.eventId as string | undefined;
   const memoryId = route.params?.memoryId;
   
@@ -35,7 +42,8 @@ const MemoryFormScreen = ({ navigation, route }: any) => {
     : existingMemoryForEvent;
 
   const [review, setReview] = useState('');
-  const [setlist, setSetlist] = useState('');
+  const [setlist, setSetlist] = useState(''); // 単一アーティスト用（後方互換）
+  const [artistSetlists, setArtistSetlistsState] = useState<ArtistSetlistInput[]>([]); // 複数アーティスト用
   const [photos, setPhotos] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -44,8 +52,29 @@ const MemoryFormScreen = ({ navigation, route }: any) => {
       setReview(editingMemory.review || '');
       setSetlist(editingMemory.setlist || '');
       setPhotos(editingMemory.photos ? JSON.parse(editingMemory.photos) : []);
+      
+      // 見たアーティストを読み込み
+      if (editingMemory.watched_artist_ids) {
+        try {
+          setWatchedArtistIds(JSON.parse(editingMemory.watched_artist_ids));
+        } catch (e) {
+          console.error('Error parsing watched_artist_ids:', e);
+        }
+      }
+      
+      // アーティストごとのセットリストを読み込み
+      getArtistSetlists(editingMemory.id).then(setlists => {
+        if (setlists.length > 0) {
+          const loadedSetlists = setlists.map(s => ({
+            artistId: s.artist_id,
+            artistName: artists.find(a => a.id === s.artist_id)?.name || 'Unknown',
+            songs: s.songs,
+          }));
+          setArtistSetlistsState(loadedSetlists);
+        }
+      });
     }
-  }, [editingMemory]);
+  }, [editingMemory, artists, getArtistSetlists]);
 
   const requestPermission = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -100,6 +129,28 @@ const MemoryFormScreen = ({ navigation, route }: any) => {
     setPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
+  // 複数アーティストのセットリストを更新
+  const updateArtistSetlist = (artistId: string, songs: string) => {
+    setArtistSetlistsState(prev => 
+      prev.map(s => s.artistId === artistId ? { ...s, songs } : s)
+    );
+  };
+
+  // フェスで見たアーティストをトグル
+  const toggleWatchedArtist = (artistId: string) => {
+    setWatchedArtistIds(prev => {
+      if (prev.includes(artistId)) {
+        return prev.filter(id => id !== artistId);
+      } else {
+        return [...prev, artistId];
+      }
+    });
+  };
+
+  // 複数アーティストイベントかどうか
+  const isMultiArtistEvent = event?.event_type === 'taiban' || event?.event_type === 'festival' || eventArtistIds.length > 1;
+  const isFestival = event?.event_type === 'festival';
+
   const handleSave = async () => {
     if (isSaving) return; // 二重タップ防止
     
@@ -107,7 +158,10 @@ const MemoryFormScreen = ({ navigation, route }: any) => {
       Alert.alert('イベント未選択', 'まず対象のライブイベントを選んでください');
       return;
     }
-    if (!review.trim() && !setlist.trim() && photos.length === 0) {
+    
+    // バリデーション: セットリストのチェック
+    const hasArtistSetlists = artistSetlists.some(s => s.songs.trim());
+    if (!review.trim() && !setlist.trim() && !hasArtistSetlists && photos.length === 0) {
       Alert.alert('エラー', '感想、セットリスト、写真のうち少なくとも一つは入力してください');
       return;
     }
@@ -116,16 +170,33 @@ const MemoryFormScreen = ({ navigation, route }: any) => {
     const memoryData: Omit<Memory, keyof BaseEntity> = {
       live_event_id: selectedEventId,
       review: review.trim() || undefined,
-      setlist: setlist.trim() || undefined,
+      setlist: isMultiArtistEvent ? undefined : (setlist.trim() || undefined), // 複数アーティストの場合は別テーブル
       photos: photos.length > 0 ? JSON.stringify(photos) : undefined,
+      watched_artist_ids: isFestival ? JSON.stringify(watchedArtistIds) : undefined,
     };
 
     try {
+      let savedMemoryId: string;
+      
       if (editingMemory) {
         await updateMemory(editingMemory.id!, memoryData);
+        savedMemoryId = editingMemory.id!;
       } else {
+        // Note: addMemoryは新しいIDを返さないので、一旦保存してから取得する必要がある
         await addMemory(memoryData);
+        // 保存されたメモリを取得（selectedEventIdで検索）
+        const savedMemory = memories.find(m => m.live_event_id === selectedEventId);
+        savedMemoryId = savedMemory?.id || '';
       }
+      
+      // 複数アーティストのセットリストを保存
+      if (isMultiArtistEvent && savedMemoryId) {
+        const setlistsToSave = artistSetlists
+          .filter(s => s.songs.trim())
+          .map(s => ({ artistId: s.artistId, songs: s.songs }));
+        await setArtistSetlists(savedMemoryId, setlistsToSave);
+      }
+      
       navigation.goBack();
     } catch {
       Alert.alert('エラー', '保存に失敗しました');
@@ -329,19 +400,89 @@ const MemoryFormScreen = ({ navigation, route }: any) => {
           />
         </View>
 
+        {/* フェス用: 見たアーティスト選択 */}
+        {isFestival && eventArtistIds.length > 1 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>見たアーティスト</Text>
+            <Text style={styles.sectionHint}>観覧したアーティストを選択してください</Text>
+            <View style={styles.watchedArtistsContainer}>
+              {eventArtistIds.map((artistId, index) => {
+                const artist = artists.find(a => a.id === artistId);
+                const isWatched = watchedArtistIds.includes(artistId);
+                return (
+                  <TouchableOpacity
+                    key={artistId}
+                    style={[
+                      styles.watchedArtistItem,
+                      isWatched && styles.watchedArtistItemActive
+                    ]}
+                    onPress={() => toggleWatchedArtist(artistId)}
+                  >
+                    <Ionicons 
+                      name={isWatched ? "checkbox" : "square-outline"} 
+                      size={22} 
+                      color={isWatched ? "#007AFF" : "#999"} 
+                    />
+                    <Text style={[
+                      styles.watchedArtistName,
+                      isWatched && styles.watchedArtistNameActive
+                    ]}>
+                      {artist?.name || 'Unknown'}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* セットリスト: 単一アーティストまたは複数アーティスト */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>セットリスト</Text>
-          <TextInput
-            style={[styles.input, styles.setlistInput]}
-            value={setlist}
-            onChangeText={setSetlist}
-            placeholder="セットリストを記録しましょう...&#10;例：&#10;1. Opening SE&#10;2. 曲名1&#10;3. 曲名2&#10;- MC -&#10;4. 曲名3"
-            multiline
-            numberOfLines={10}
-            textAlignVertical="top"
-            blurOnSubmit={false}
-            returnKeyType="default"
-          />
+          
+          {/* 複数アーティストの場合: アーティストごとにセットリスト入力 */}
+          {isMultiArtistEvent && artistSetlists.length > 0 ? (
+            <View>
+              {artistSetlists.map((artistSetlist, index) => {
+                // フェスの場合、見たアーティストのみ表示
+                if (isFestival && !watchedArtistIds.includes(artistSetlist.artistId)) {
+                  return null;
+                }
+                return (
+                  <View key={artistSetlist.artistId} style={styles.artistSetlistContainer}>
+                    <View style={styles.artistSetlistHeader}>
+                      <Text style={styles.artistSetlistOrder}>{index + 1}.</Text>
+                      <Text style={styles.artistSetlistName}>{artistSetlist.artistName}</Text>
+                    </View>
+                    <TextInput
+                      style={[styles.input, styles.setlistInput]}
+                      value={artistSetlist.songs}
+                      onChangeText={(text) => updateArtistSetlist(artistSetlist.artistId, text)}
+                      placeholder={`${artistSetlist.artistName}のセットリスト...&#10;1. 曲名1&#10;2. 曲名2`}
+                      multiline
+                      numberOfLines={6}
+                      textAlignVertical="top"
+                      blurOnSubmit={false}
+                      returnKeyType="default"
+                    />
+                  </View>
+                );
+              })}
+            </View>
+          ) : (
+            // 単一アーティストの場合: 従来のセットリスト入力
+            <TextInput
+              style={[styles.input, styles.setlistInput]}
+              value={setlist}
+              onChangeText={setSetlist}
+              placeholder="セットリストを記録しましょう...&#10;例：&#10;1. Opening SE&#10;2. 曲名1&#10;3. 曲名2&#10;- MC -&#10;4. 曲名3"
+              multiline
+              numberOfLines={10}
+              textAlignVertical="top"
+              blurOnSubmit={false}
+              returnKeyType="default"
+            />
+          )}
         </View>
 
         <View style={styles.section}>
@@ -660,6 +801,62 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 18,
     color: '#666',
+  },
+  // フェス用: 見たアーティスト選択
+  sectionHint: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 12,
+  },
+  watchedArtistsContainer: {
+    gap: 8,
+  },
+  watchedArtistItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  watchedArtistItemActive: {
+    backgroundColor: '#e8f4ff',
+    borderColor: '#007AFF',
+  },
+  watchedArtistName: {
+    fontSize: 16,
+    color: '#666',
+    marginLeft: 12,
+  },
+  watchedArtistNameActive: {
+    color: '#333',
+    fontWeight: '500',
+  },
+  // アーティストごとのセットリスト
+  artistSetlistContainer: {
+    marginBottom: 16,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  artistSetlistHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  artistSetlistOrder: {
+    fontSize: 14,
+    color: '#888',
+    marginRight: 8,
+  },
+  artistSetlistName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
   },
 });
 

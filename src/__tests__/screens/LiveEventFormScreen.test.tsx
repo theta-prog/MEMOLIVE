@@ -71,9 +71,12 @@ describe('LiveEventFormScreen', () => {
       addLiveEvent: mockAddLiveEvent,
       updateLiveEvent: mockUpdateLiveEvent,
       deleteLiveEvent: jest.fn(),
+      getLiveEventArtists: jest.fn().mockResolvedValue([]),
       addMemory: jest.fn(),
       updateMemory: jest.fn(),
       deleteMemory: jest.fn(),
+      getArtistSetlists: jest.fn().mockResolvedValue([]),
+      setArtistSetlists: jest.fn().mockResolvedValue(undefined),
       refreshData: jest.fn(),
     });
   });
@@ -187,9 +190,12 @@ describe('LiveEventFormScreen', () => {
       addLiveEvent: mockAddLiveEvent,
       updateLiveEvent: mockUpdateLiveEvent,
       deleteLiveEvent: jest.fn(),
+      getLiveEventArtists: jest.fn().mockResolvedValue([]),
       addMemory: jest.fn(),
       updateMemory: jest.fn(),
       deleteMemory: jest.fn(),
+      getArtistSetlists: jest.fn().mockResolvedValue([]),
+      setArtistSetlists: jest.fn().mockResolvedValue(undefined),
       refreshData: jest.fn(),
     });
 
@@ -221,9 +227,12 @@ describe('LiveEventFormScreen', () => {
       addLiveEvent: jest.fn(),
       updateLiveEvent: jest.fn(),
       deleteLiveEvent: jest.fn(),
+      getLiveEventArtists: jest.fn().mockResolvedValue([]),
       addMemory: jest.fn(),
       updateMemory: jest.fn(),
       deleteMemory: jest.fn(),
+      getArtistSetlists: jest.fn().mockResolvedValue([]),
+      setArtistSetlists: jest.fn().mockResolvedValue(undefined),
       refreshData: jest.fn(),
     });
 
@@ -258,9 +267,12 @@ describe('LiveEventFormScreen', () => {
       addLiveEvent: jest.fn(),
       updateLiveEvent: jest.fn(),
       deleteLiveEvent: jest.fn(),
+      getLiveEventArtists: jest.fn().mockResolvedValue([]),
       addMemory: jest.fn(),
       updateMemory: jest.fn(),
       deleteMemory: jest.fn(),
+      getArtistSetlists: jest.fn().mockResolvedValue([]),
+      setArtistSetlists: jest.fn().mockResolvedValue(undefined),
       refreshData: jest.fn(),
     });
 
@@ -290,9 +302,12 @@ describe('LiveEventFormScreen', () => {
       addLiveEvent: jest.fn(),
       updateLiveEvent: jest.fn(),
       deleteLiveEvent: jest.fn(),
+      getLiveEventArtists: jest.fn().mockResolvedValue([]),
       addMemory: jest.fn(),
       updateMemory: jest.fn(),
       deleteMemory: jest.fn(),
+      getArtistSetlists: jest.fn().mockResolvedValue([]),
+      setArtistSetlists: jest.fn().mockResolvedValue(undefined),
       refreshData: jest.fn(),
     });
 
@@ -327,9 +342,12 @@ describe('LiveEventFormScreen', () => {
       addLiveEvent: mockAddLiveEvent,
       updateLiveEvent: jest.fn(),
       deleteLiveEvent: jest.fn(),
+      getLiveEventArtists: jest.fn().mockResolvedValue([]),
       addMemory: jest.fn(),
       updateMemory: jest.fn(),
       deleteMemory: jest.fn(),
+      getArtistSetlists: jest.fn().mockResolvedValue([]),
+      setArtistSetlists: jest.fn().mockResolvedValue(undefined),
       refreshData: jest.fn(),
     });
 

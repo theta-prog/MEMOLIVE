@@ -17,9 +17,12 @@ export interface Artist extends BaseEntity {
   photo?: string; // Artist photo URI
 }
 
+// イベントタイプ: single=ワンマン, taiban=対バン, festival=フェス
+export type EventType = 'single' | 'taiban' | 'festival';
+
 export interface LiveEvent extends BaseEntity {
   title: string;
-  artist_id: string;
+  artist_id: string; // 後方互換性のため残す（メインアーティスト or 最初のアーティスト）
   date: string;
   doors_open?: string;
   show_start?: string;
@@ -29,13 +32,31 @@ export interface LiveEvent extends BaseEntity {
   ticket_price?: number;
   seat_number?: string;
   memo?: string;
+  event_type?: EventType; // 新規追加
+}
+
+// ライブイベントとアーティストの中間テーブル（複数アーティスト対応）
+export interface LiveEventArtist extends BaseEntity {
+  live_event_id: string;
+  artist_id: string;
+  order: number; // 出演順
+  is_headliner?: boolean; // メインアクトかどうか
 }
 
 export interface Memory extends BaseEntity {
   live_event_id: string;
   review?: string;
-  setlist?: string;
+  setlist?: string; // 後方互換性のため残す（単一アーティストの場合のみ使用）
   photos?: string; // JSON array of photo URIs
+  watched_artist_ids?: string; // JSON array - フェスで見たアーティストのID
+}
+
+// アーティストごとのセットリスト（対バン・フェス用）
+export interface ArtistSetlist extends BaseEntity {
+  memory_id: string;
+  artist_id: string;
+  order: number; // 出演順
+  songs: string; // 曲リスト（改行区切り）
 }
 
 export interface DeletedItem {
@@ -50,6 +71,8 @@ const STORAGE_KEYS = {
   MEMORIES: 'memories',
   DELETED_ITEMS: 'deleted_items',
   LAST_SYNC: 'last_sync',
+  LIVE_EVENT_ARTISTS: 'live_event_artists',
+  ARTIST_SETLISTS: 'artist_setlists',
 };
 
 class Database {
@@ -132,6 +155,55 @@ class Database {
     await this.addDeletedItem(id, 'artist');
   }
 
+  // ========== LiveEventArtist methods (中間テーブル) ==========
+  
+  async createLiveEventArtist(data: Omit<LiveEventArtist, keyof BaseEntity>): Promise<LiveEventArtist> {
+    const items = await this.getStoredData<LiveEventArtist>(STORAGE_KEYS.LIVE_EVENT_ARTISTS);
+    const newItem: LiveEventArtist = {
+      ...data,
+      id: this.getNextId(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      sync_status: 'created',
+    };
+    items.push(newItem);
+    await this.setStoredData(STORAGE_KEYS.LIVE_EVENT_ARTISTS, items);
+    return newItem;
+  }
+
+  async getLiveEventArtistsByEventId(liveEventId: string): Promise<LiveEventArtist[]> {
+    const items = await this.getStoredData<LiveEventArtist>(STORAGE_KEYS.LIVE_EVENT_ARTISTS);
+    return items
+      .filter(item => item.live_event_id === liveEventId)
+      .sort((a, b) => a.order - b.order);
+  }
+
+  async getLiveEventArtistsByArtistId(artistId: string): Promise<LiveEventArtist[]> {
+    const items = await this.getStoredData<LiveEventArtist>(STORAGE_KEYS.LIVE_EVENT_ARTISTS);
+    return items.filter(item => item.artist_id === artistId);
+  }
+
+  async deleteLiveEventArtistsByEventId(liveEventId: string): Promise<void> {
+    const items = await this.getStoredData<LiveEventArtist>(STORAGE_KEYS.LIVE_EVENT_ARTISTS);
+    const filtered = items.filter(item => item.live_event_id !== liveEventId);
+    await this.setStoredData(STORAGE_KEYS.LIVE_EVENT_ARTISTS, filtered);
+  }
+
+  async setLiveEventArtists(liveEventId: string, artistIds: string[]): Promise<void> {
+    // 既存の関連を削除
+    await this.deleteLiveEventArtistsByEventId(liveEventId);
+    
+    // 新しい関連を作成
+    for (let i = 0; i < artistIds.length; i++) {
+      await this.createLiveEventArtist({
+        live_event_id: liveEventId,
+        artist_id: artistIds[i]!,
+        order: i,
+        is_headliner: i === 0, // 最初のアーティストをヘッドライナーとする
+      });
+    }
+  }
+
   // Live events methods
   async createLiveEvent(event: Omit<LiveEvent, keyof BaseEntity>): Promise<LiveEvent> {
     const events = await this.getStoredData<LiveEvent>(STORAGE_KEYS.LIVE_EVENTS);
@@ -157,15 +229,33 @@ class Database {
     return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }
 
-  async getLiveEventsWithArtists(): Promise<(LiveEvent & { artist_name: string })[]> {
+  async getLiveEventsWithArtists(): Promise<(LiveEvent & { artist_name: string; artist_names: string[] })[]> {
     const events = await this.getAllLiveEvents();
     const artists = await this.getAllArtists();
+    const liveEventArtists = await this.getStoredData<LiveEventArtist>(STORAGE_KEYS.LIVE_EVENT_ARTISTS);
     
     return events.map(event => {
-      const artist = artists.find(a => a.id === event.artist_id);
+      // 中間テーブルから複数アーティストを取得
+      const eventArtistLinks = liveEventArtists
+        .filter(lea => lea.live_event_id === event.id)
+        .sort((a, b) => a.order - b.order);
+      
+      let artistNames: string[] = [];
+      
+      if (eventArtistLinks.length > 0) {
+        // 新形式: 中間テーブルから複数アーティストを取得
+        artistNames = eventArtistLinks
+          .map(link => artists.find(a => a.id === link.artist_id)?.name || 'Unknown Artist');
+      } else if (event.artist_id) {
+        // 後方互換: 単一artist_idから取得
+        const artist = artists.find(a => a.id === event.artist_id);
+        artistNames = [artist?.name || 'Unknown Artist'];
+      }
+      
       return {
         ...event,
-        artist_name: artist?.name || 'Unknown Artist',
+        artist_name: artistNames.join(' / ') || 'Unknown Artist', // 後方互換用
+        artist_names: artistNames,
       };
     });
   }
@@ -233,19 +323,18 @@ class Database {
     );
   }
 
-  async getMemoriesWithEventDetails(): Promise<(Memory & { event_title: string; artist_name: string; event_date: string })[]> {
+  async getMemoriesWithEventDetails(): Promise<(Memory & { event_title: string; artist_name: string; artist_names: string[]; event_date: string })[]> {
     const memories = await this.getAllMemories();
-    const events = await this.getAllLiveEvents();
-    const artists = await this.getAllArtists();
+    const eventsWithArtists = await this.getLiveEventsWithArtists();
 
     return memories.map(memory => {
-      const event = events.find(e => e.id === memory.live_event_id);
-      const artist = event ? artists.find(a => a.id === event.artist_id) : null;
+      const event = eventsWithArtists.find(e => e.id === memory.live_event_id);
       
       return {
         ...memory,
         event_title: event?.title || 'Unknown Event',
-        artist_name: artist?.name || 'Unknown Artist',
+        artist_name: event?.artist_name || 'Unknown Artist',
+        artist_names: event?.artist_names || [],
         event_date: event?.date || '',
       };
     });
@@ -271,6 +360,77 @@ class Database {
     const filteredMemories = memories.filter(memory => memory.id !== id);
     await this.setStoredData(STORAGE_KEYS.MEMORIES, filteredMemories);
     await this.addDeletedItem(id, 'memory');
+    
+    // 関連するアーティストセットリストも削除
+    await this.deleteArtistSetlistsByMemoryId(id);
+  }
+
+  // ========== ArtistSetlist methods (アーティストごとのセットリスト) ==========
+
+  async createArtistSetlist(data: Omit<ArtistSetlist, keyof BaseEntity>): Promise<ArtistSetlist> {
+    const items = await this.getStoredData<ArtistSetlist>(STORAGE_KEYS.ARTIST_SETLISTS);
+    const newItem: ArtistSetlist = {
+      ...data,
+      id: this.getNextId(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      sync_status: 'created',
+    };
+    items.push(newItem);
+    await this.setStoredData(STORAGE_KEYS.ARTIST_SETLISTS, items);
+    return newItem;
+  }
+
+  async getArtistSetlistsByMemoryId(memoryId: string): Promise<ArtistSetlist[]> {
+    const items = await this.getStoredData<ArtistSetlist>(STORAGE_KEYS.ARTIST_SETLISTS);
+    return items
+      .filter(item => item.memory_id === memoryId)
+      .sort((a, b) => a.order - b.order);
+  }
+
+  async updateArtistSetlist(id: string, data: Partial<ArtistSetlist>): Promise<void> {
+    const items = await this.getStoredData<ArtistSetlist>(STORAGE_KEYS.ARTIST_SETLISTS);
+    const index = items.findIndex(item => item.id === id);
+    if (index !== -1) {
+      const current = items[index]!;
+      items[index] = {
+        ...current,
+        ...data,
+        updated_at: new Date().toISOString(),
+        sync_status: current.sync_status === 'created' ? 'created' : 'updated',
+      };
+      await this.setStoredData(STORAGE_KEYS.ARTIST_SETLISTS, items);
+    }
+  }
+
+  async deleteArtistSetlist(id: string): Promise<void> {
+    const items = await this.getStoredData<ArtistSetlist>(STORAGE_KEYS.ARTIST_SETLISTS);
+    const filtered = items.filter(item => item.id !== id);
+    await this.setStoredData(STORAGE_KEYS.ARTIST_SETLISTS, filtered);
+  }
+
+  async deleteArtistSetlistsByMemoryId(memoryId: string): Promise<void> {
+    const items = await this.getStoredData<ArtistSetlist>(STORAGE_KEYS.ARTIST_SETLISTS);
+    const filtered = items.filter(item => item.memory_id !== memoryId);
+    await this.setStoredData(STORAGE_KEYS.ARTIST_SETLISTS, filtered);
+  }
+
+  async setArtistSetlists(memoryId: string, setlists: { artistId: string; songs: string }[]): Promise<void> {
+    // 既存のセットリストを削除
+    await this.deleteArtistSetlistsByMemoryId(memoryId);
+    
+    // 新しいセットリストを作成
+    for (let i = 0; i < setlists.length; i++) {
+      const setlist = setlists[i]!;
+      if (setlist.songs.trim()) {
+        await this.createArtistSetlist({
+          memory_id: memoryId,
+          artist_id: setlist.artistId,
+          order: i,
+          songs: setlist.songs.trim(),
+        });
+      }
+    }
   }
 
   // ========== Sync methods ==========

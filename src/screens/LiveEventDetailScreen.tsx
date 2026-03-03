@@ -131,7 +131,45 @@ const LiveEventDetailScreen = ({ navigation, route }: any) => {
           <View style={styles.content}>
         <View style={styles.mainInfo}>
           <Text style={styles.eventTitle}>{event.title}</Text>
-          <Text style={styles.artistName}>{event.artist_name}</Text>
+          
+          {/* イベントタイプバッジ */}
+          {event.event_type && event.event_type !== 'single' && (
+            <View style={styles.eventTypeBadge}>
+              <Ionicons 
+                name={event.event_type === 'taiban' ? 'people' : 'musical-notes'} 
+                size={14} 
+                color={theme.colors.text.inverse} 
+              />
+              <Text style={styles.eventTypeBadgeText}>
+                {event.event_type === 'taiban' ? '対バン' : 'フェス'}
+              </Text>
+            </View>
+          )}
+          
+          {/* 複数アーティスト表示 */}
+          {event.artist_names && event.artist_names.length > 1 ? (
+            <View style={styles.artistsList}>
+              {event.artist_names.map((name, index) => (
+                <View key={index} style={styles.artistListItem}>
+                  <Text style={styles.artistListOrder}>{index + 1}.</Text>
+                  <Text style={[
+                    styles.artistListName,
+                    index === 0 && styles.artistListNameMain
+                  ]}>
+                    {name}
+                  </Text>
+                  {index === 0 && (
+                    <View style={styles.mainActBadge}>
+                      <Text style={styles.mainActBadgeText}>メイン</Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.artistName}>{event.artist_name}</Text>
+          )}
+          
           <Text style={styles.eventDate}>{formatDate(event.date)}</Text>
           
           {!isEventPassed() && (
@@ -429,6 +467,58 @@ const styles = StyleSheet.create({
   errorText: {
     ...typography.body1,
     color: theme.colors.text.secondary,
+  },
+  // イベントタイプバッジ
+  eventTypeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.accent,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+    gap: 4,
+  },
+  eventTypeBadgeText: {
+    ...typography.caption,
+    color: theme.colors.text.inverse,
+    fontWeight: '600',
+  },
+  // 複数アーティストリスト
+  artistsList: {
+    marginVertical: 8,
+  },
+  artistListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  artistListOrder: {
+    ...typography.body2,
+    color: theme.colors.text.tertiary,
+    marginRight: 8,
+    minWidth: 20,
+  },
+  artistListName: {
+    ...typography.body1,
+    color: theme.colors.text.primary,
+  },
+  artistListNameMain: {
+    fontWeight: '600',
+  },
+  mainActBadge: {
+    backgroundColor: theme.colors.accent,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginLeft: 8,
+  },
+  mainActBadgeText: {
+    ...typography.caption,
+    color: theme.colors.text.inverse,
+    fontWeight: '600',
+    fontSize: 10,
   },
 });
 

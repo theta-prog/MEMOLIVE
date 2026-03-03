@@ -26,12 +26,18 @@ jest.mock('../../database/asyncDatabase', () => {
     createArtist: jest.fn().mockResolvedValue('1'),
     updateArtist: jest.fn().mockResolvedValue(true),
     deleteArtist: jest.fn().mockResolvedValue(true),
-    createLiveEvent: jest.fn().mockResolvedValue('1'),
+    createLiveEvent: jest.fn().mockResolvedValue({ id: '1' }),
     updateLiveEvent: jest.fn().mockResolvedValue(true),
     deleteLiveEvent: jest.fn().mockResolvedValue(true),
     createMemory: jest.fn().mockResolvedValue('1'),
     updateMemory: jest.fn().mockResolvedValue(true),
     deleteMemory: jest.fn().mockResolvedValue(true),
+    // 新しいメソッド
+    getLiveEventArtistsByEventId: jest.fn().mockResolvedValue([]),
+    setLiveEventArtists: jest.fn().mockResolvedValue(undefined),
+    deleteLiveEventArtistsByEventId: jest.fn().mockResolvedValue(undefined),
+    getArtistSetlistsByMemoryId: jest.fn().mockResolvedValue([]),
+    setArtistSetlists: jest.fn().mockResolvedValue(undefined),
   };
   return {
     database: mockDb,

@@ -35,52 +35,88 @@ model RefreshToken {
 }
 
 model Artist {
-  id          String   @id @default(uuid())
-  user        User     @relation(fields: [userId], references: [id])
-  userId      String
-  name        String
-  website     String?
-  socialMedia String?
-  photoUrl    String?
-  version     Int      @default(1)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  liveEvents  LiveEvent[]
+  id              String            @id @default(uuid())
+  user            User              @relation(fields: [userId], references: [id])
+  userId          String
+  name            String
+  website         String?
+  socialMedia     String?
+  photoUrl        String?
+  version         Int               @default(1)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  liveEvents      LiveEvent[]       // 後方互換: 単一アーティストのイベント
+  liveEventArtists LiveEventArtist[] // 新規: 複数アーティスト対応
+  artistSetlists  ArtistSetlist[]   // 新規: アーティストごとのセットリスト
 }
 
 model LiveEvent {
-  id            String    @id @default(uuid())
-  user          User      @relation(fields: [userId], references: [id])
+  id            String              @id @default(uuid())
+  user          User                @relation(fields: [userId], references: [id])
   userId        String
-  artist        Artist?   @relation(fields: [artistId], references: [id])
-  artistId      String?
+  artist        Artist?             @relation(fields: [artistId], references: [id])
+  artistId      String?             // 後方互換: 単一アーティスト
   title         String
   date          DateTime
   venue         String?
   venueAddress  String?
   doorsOpen     String?
   showStart     String?
-  ticketStatus  String?   // 'won' | 'lost' | 'pending' | 'purchased'
+  ticketStatus  String?             // 'won' | 'lost' | 'pending' | 'purchased'
   ticketPrice   Int?
   seatNumber    String?
   memo          String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  eventType     String?             // 新規: 'single' | 'taiban' | 'festival'
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
   memories      Memory[]
+  liveEventArtists LiveEventArtist[] // 新規: 複数アーティスト対応
+}
+
+// 中間テーブル: ライブイベントとアーティストの多対多関係
+model LiveEventArtist {
+  id          String    @id @default(uuid())
+  liveEvent   LiveEvent @relation(fields: [liveEventId], references: [id], onDelete: Cascade)
+  liveEventId String
+  artist      Artist    @relation(fields: [artistId], references: [id])
+  artistId    String
+  order       Int       @default(0)  // 出演順
+  isHeadliner Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([liveEventId, artistId])
 }
 
 model Memory {
-  id          String    @id @default(uuid())
-  user        User      @relation(fields: [userId], references: [id])
-  userId      String
-  event       LiveEvent @relation(fields: [eventId], references: [id])
-  eventId     String
-  review      String?
-  setlist     String?
-  photos      Json?     // array of urls
-  shareToken  String?   @unique
-  shareEnabled Boolean  @default(false)
-  sharedAt    DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id               String          @id @default(uuid())
+  user             User            @relation(fields: [userId], references: [id])
+  userId           String
+  event            LiveEvent       @relation(fields: [eventId], references: [id])
+  eventId          String
+  review           String?
+  setlist          String?         // 後方互換: 単一アーティストのセットリスト
+  photos           Json?           // array of urls
+  watchedArtistIds Json?           // 新規: フェスで見たアーティストのID配列
+  shareToken       String?         @unique
+  shareEnabled     Boolean         @default(false)
+  sharedAt         DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  artistSetlists   ArtistSetlist[] // 新規: アーティストごとのセットリスト
+}
+
+// アーティストごとのセットリスト（対バン・フェス用）
+model ArtistSetlist {
+  id        String   @id @default(uuid())
+  memory    Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  memoryId  String
+  artist    Artist   @relation(fields: [artistId], references: [id])
+  artistId  String
+  order     Int      @default(0)  // 出演順
+  songs     String                // 曲リスト（改行区切り）
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([memoryId, artistId])
 }

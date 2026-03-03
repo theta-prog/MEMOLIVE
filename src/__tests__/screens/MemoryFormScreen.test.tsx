@@ -110,10 +110,13 @@ describe('MemoryFormScreen', () => {
       addLiveEvent: jest.fn(),
       updateLiveEvent: jest.fn(),
       deleteLiveEvent: jest.fn(),
+      getLiveEventArtists: jest.fn().mockResolvedValue([]),
       memories: mockMemories,
       addMemory: mockAddMemory,
       updateMemory: mockUpdateMemory,
       deleteMemory: jest.fn(),
+      getArtistSetlists: jest.fn().mockResolvedValue([]),
+      setArtistSetlists: jest.fn().mockResolvedValue(undefined),
       refreshData: jest.fn(),
     });
   });
@@ -131,10 +134,13 @@ describe('MemoryFormScreen', () => {
         addLiveEvent: jest.fn(),
         updateLiveEvent: jest.fn(),
         deleteLiveEvent: jest.fn(),
+        getLiveEventArtists: jest.fn().mockResolvedValue([]),
         memories: [], // Empty memories for new memory creation
         addMemory: mockAddMemory,
         updateMemory: mockUpdateMemory,
         deleteMemory: jest.fn(),
+        getArtistSetlists: jest.fn().mockResolvedValue([]),
+        setArtistSetlists: jest.fn().mockResolvedValue(undefined),
         refreshData: jest.fn(),
       });
     });
@@ -254,10 +260,13 @@ describe('MemoryFormScreen', () => {
         addLiveEvent: jest.fn(),
         updateLiveEvent: jest.fn(),
         deleteLiveEvent: jest.fn(),
+        getLiveEventArtists: jest.fn().mockResolvedValue([]),
         memories: [], // Empty memories for new memory creation
         addMemory: mockAddMemory,
         updateMemory: mockUpdateMemory,
         deleteMemory: jest.fn(),
+        getArtistSetlists: jest.fn().mockResolvedValue([]),
+        setArtistSetlists: jest.fn().mockResolvedValue(undefined),
         refreshData: jest.fn(),
       });
     });
@@ -358,10 +367,13 @@ describe('MemoryFormScreen', () => {
         addLiveEvent: jest.fn(),
         updateLiveEvent: jest.fn(),
         deleteLiveEvent: jest.fn(),
+        getLiveEventArtists: jest.fn().mockResolvedValue([]),
         memories: [], // Empty memories for validation tests
         addMemory: mockAddMemory,
         updateMemory: mockUpdateMemory,
         deleteMemory: jest.fn(),
+        getArtistSetlists: jest.fn().mockResolvedValue([]),
+        setArtistSetlists: jest.fn().mockResolvedValue(undefined),
         refreshData: jest.fn(),
       });
     });

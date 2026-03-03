@@ -1,16 +1,30 @@
 import React, { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { artistService, liveEventService, memoryService } from '../api/services';
 import { syncService } from '../api/syncService';
-import { Artist, BaseEntity, database, LiveEvent, Memory } from '../database/asyncDatabase';
+import { Artist, ArtistSetlist, BaseEntity, database, LiveEvent, LiveEventArtist, Memory } from '../database/asyncDatabase';
 import { isEventToday } from '../utils';
 import { storage } from '../utils/storage';
 import { useAuth } from './AuthContext';
 
+// 拡張されたLiveEvent型（複数アーティスト対応）
+export type LiveEventWithArtists = LiveEvent & { 
+  artist_name: string; 
+  artist_names: string[];
+};
+
+// 拡張されたMemory型（複数アーティスト対応）
+export type MemoryWithDetails = Memory & { 
+  event_title: string; 
+  artist_name: string;
+  artist_names: string[];
+  event_date: string;
+};
+
 interface AppContextType {
   artists: Artist[];
-  liveEvents: (LiveEvent & { artist_name: string })[];
-  memories: (Memory & { event_title: string; artist_name: string; event_date: string })[];
-  upcomingEvents: (LiveEvent & { artist_name: string })[];
+  liveEvents: LiveEventWithArtists[];
+  memories: MemoryWithDetails[];
+  upcomingEvents: LiveEventWithArtists[];
   isSyncing: boolean;
   lastSyncAt: string | null;
   
@@ -20,14 +34,19 @@ interface AppContextType {
   deleteArtist: (id: string) => Promise<void>;
   
   // Live event methods
-  addLiveEvent: (event: Omit<LiveEvent, keyof BaseEntity>) => Promise<void>;
-  updateLiveEvent: (id: string, event: Partial<LiveEvent>) => Promise<void>;
+  addLiveEvent: (event: Omit<LiveEvent, keyof BaseEntity>, artistIds?: string[]) => Promise<void>;
+  updateLiveEvent: (id: string, event: Partial<LiveEvent>, artistIds?: string[]) => Promise<void>;
   deleteLiveEvent: (id: string) => Promise<void>;
+  getLiveEventArtists: (liveEventId: string) => Promise<LiveEventArtist[]>;
   
   // Memory methods
   addMemory: (memory: Omit<Memory, keyof BaseEntity>) => Promise<void>;
   updateMemory: (id: string, memory: Partial<Memory>) => Promise<void>;
   deleteMemory: (id: string) => Promise<void>;
+  
+  // ArtistSetlist methods
+  getArtistSetlists: (memoryId: string) => Promise<ArtistSetlist[]>;
+  setArtistSetlists: (memoryId: string, setlists: { artistId: string; songs: string }[]) => Promise<void>;
   
   // Utility methods
   refreshData: () => Promise<void>;
@@ -51,9 +70,9 @@ interface AppProviderProps {
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const { isAuthenticated } = useAuth();
   const [artists, setArtists] = useState<Artist[]>([]);
-  const [liveEvents, setLiveEvents] = useState<(LiveEvent & { artist_name: string })[]>([]);
-  const [memories, setMemories] = useState<(Memory & { event_title: string; artist_name: string; event_date: string })[]>([]);
-  const [upcomingEvents, setUpcomingEvents] = useState<(LiveEvent & { artist_name: string })[]>([]);
+  const [liveEvents, setLiveEvents] = useState<LiveEventWithArtists[]>([]);
+  const [memories, setMemories] = useState<MemoryWithDetails[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<LiveEventWithArtists[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
@@ -62,8 +81,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   // Helper function to update state with data
   const updateStateWithData = useCallback((
     artistsData: Artist[],
-    eventsData: (LiveEvent & { artist_name: string })[],
-    memoriesData: (Memory & { event_title: string; artist_name: string; event_date: string })[]
+    eventsData: LiveEventWithArtists[],
+    memoriesData: MemoryWithDetails[]
   ) => {
     // Sort artists
     const sortedArtists = artistsData.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -130,6 +149,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             return {
               ...event,
               artist_name: artist?.name || 'Unknown Artist',
+              artist_names: artist ? [artist.name] : [], // 後方互換: APIからはまだ単一アーティストのみ
             };
           });
           
@@ -141,6 +161,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
               ...memory,
               event_title: event?.title || 'Unknown Event',
               artist_name: artist?.name || 'Unknown Artist',
+              artist_names: artist ? [artist.name] : [], // 後方互換: APIからはまだ単一アーティストのみ
               event_date: event?.date || '',
             };
           });
@@ -232,6 +253,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         }
       };
     }
+    return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]); // isAuthenticatedの変更時のみ実行
 
@@ -288,13 +310,17 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   // Live event methods
-  const addLiveEvent = async (event: Omit<LiveEvent, keyof BaseEntity>) => {
+  const addLiveEvent = async (event: Omit<LiveEvent, keyof BaseEntity>, artistIds?: string[]) => {
     try {
       const accessToken = await storage.getItem('accessToken');
       const useLocalDatabase = !isAuthenticated || !accessToken || process.env.NODE_ENV === 'development';
       
       if (useLocalDatabase) {
-        await database.createLiveEvent(event);
+        const createdEvent = await database.createLiveEvent(event);
+        // 複数アーティストが指定されている場合、中間テーブルにも保存
+        if (artistIds && artistIds.length > 0) {
+          await database.setLiveEventArtists(createdEvent.id, artistIds);
+        }
       } else {
         await liveEventService.create(event);
       }
@@ -305,13 +331,17 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   };
 
-  const updateLiveEvent = async (id: string, event: Partial<LiveEvent>) => {
+  const updateLiveEvent = async (id: string, event: Partial<LiveEvent>, artistIds?: string[]) => {
     try {
       const accessToken = await storage.getItem('accessToken');
       const useLocalDatabase = !isAuthenticated || !accessToken || process.env.NODE_ENV === 'development';
       
       if (useLocalDatabase) {
         await database.updateLiveEvent(id, event);
+        // 複数アーティストが指定されている場合、中間テーブルも更新
+        if (artistIds !== undefined) {
+          await database.setLiveEventArtists(id, artistIds);
+        }
       } else {
         await liveEventService.update(id, event);
       }
@@ -328,6 +358,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       const useLocalDatabase = !isAuthenticated || !accessToken || process.env.NODE_ENV === 'development';
       
       if (useLocalDatabase) {
+        // 中間テーブルのデータも削除
+        await database.deleteLiveEventArtistsByEventId(id);
         await database.deleteLiveEvent(id);
       } else {
         await liveEventService.delete(id);
@@ -337,6 +369,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       console.error('Error deleting live event:', error);
       throw error;
     }
+  };
+
+  // LiveEventArtist取得メソッド
+  const getLiveEventArtists = async (liveEventId: string): Promise<LiveEventArtist[]> => {
+    return database.getLiveEventArtistsByEventId(liveEventId);
   };
 
   // Memory methods
@@ -390,6 +427,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   };
 
+  // ArtistSetlist methods
+  const getArtistSetlists = async (memoryId: string): Promise<ArtistSetlist[]> => {
+    return database.getArtistSetlistsByMemoryId(memoryId);
+  };
+
+  const setArtistSetlists = async (memoryId: string, setlists: { artistId: string; songs: string }[]): Promise<void> => {
+    await database.setArtistSetlists(memoryId, setlists);
+  };
+
   const value: AppContextType = {
     artists,
     liveEvents,
@@ -403,9 +449,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     addLiveEvent,
     updateLiveEvent,
     deleteLiveEvent,
+    getLiveEventArtists,
     addMemory,
     updateMemory,
     deleteMemory,
+    getArtistSetlists,
+    setArtistSetlists,
     refreshData,
     syncWithServer,
   };
