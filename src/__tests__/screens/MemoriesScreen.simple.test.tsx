@@ -19,6 +19,9 @@ describe('MemoriesScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: [],

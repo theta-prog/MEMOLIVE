@@ -50,6 +50,9 @@ describe('App Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: mockUpcomingEvents,

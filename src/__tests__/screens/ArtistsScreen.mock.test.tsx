@@ -60,6 +60,9 @@ describe('ArtistsScreen Mock Tests', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [artistWithAllFields],
       liveEvents: [],
       upcomingEvents: [],
@@ -97,6 +100,9 @@ describe('ArtistsScreen Mock Tests', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [minimalArtist],
       liveEvents: [],
       upcomingEvents: [],
@@ -135,6 +141,9 @@ describe('ArtistsScreen Mock Tests', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [artistWithPhoto],
       liveEvents: [],
       upcomingEvents: [],
@@ -170,6 +179,9 @@ describe('ArtistsScreen Mock Tests', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [artistWithoutPhoto],
       liveEvents: [],
       upcomingEvents: [],
@@ -207,6 +219,9 @@ describe('ArtistsScreen Mock Tests', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [testArtist],
       liveEvents: [],
       upcomingEvents: [],
@@ -245,6 +260,9 @@ describe('ArtistsScreen Mock Tests', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [testArtist],
       liveEvents: [],
       upcomingEvents: [],
@@ -302,6 +320,9 @@ describe('ArtistsScreen Mock Tests', () => {
     ];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: multipleArtists,
       liveEvents: [],
       upcomingEvents: [],
@@ -366,6 +387,9 @@ describe('ArtistsScreen Mock Tests', () => {
     ];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: mixedArtists,
       liveEvents: [],
       upcomingEvents: [],
@@ -411,6 +435,9 @@ describe('ArtistsScreen Mock Tests', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [testArtist],
       liveEvents: [],
       upcomingEvents: [],

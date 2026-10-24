@@ -14,7 +14,7 @@ export async function storageRoutes(app: FastifyInstance) {
   app.post('/v1/storage/presign', { preValidation: [auth] }, async (req: any, reply) => {
     const parsed = presignRequestSchema.safeParse(req.body);
     if (!parsed.success) {
-      return reply.code(400).send({ code: 'VALIDATION_ERROR', errors: parsed.error.errors });
+      return reply.code(400).send({ code: 'VALIDATION_ERROR', errors: parsed.error.issues });
     }
 
     const userId = req.user.sub;

@@ -48,6 +48,9 @@ describe('MemoriesScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: [],
@@ -149,6 +152,9 @@ describe('MemoriesScreen', () => {
 
   it('shows empty state when no memories', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: [],
@@ -191,6 +197,9 @@ describe('MemoriesScreen', () => {
     ];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: [],
@@ -246,6 +255,9 @@ describe('MemoriesScreen', () => {
     );
     
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       memories: sortedMemories,
@@ -288,6 +300,9 @@ describe('MemoriesScreen', () => {
   it('handles memory deletion', () => {
     const mockDeleteMemory = jest.fn();
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       memories: mockMemories,
@@ -313,6 +328,9 @@ describe('MemoriesScreen', () => {
 
   it('handles empty memories state', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       memories: [],
@@ -347,6 +365,9 @@ describe('MemoriesScreen', () => {
   it('handles memory creation flow', () => {
     const mockAddMemory = jest.fn();
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       memories: [],
@@ -373,6 +394,9 @@ describe('MemoriesScreen', () => {
   it('handles memory updates and refresh', () => {
     const mockRefreshData = jest.fn();
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       memories: mockMemories,
@@ -412,6 +436,9 @@ describe('MemoriesScreen', () => {
     }));
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       memories: largeMemoryList,
@@ -437,6 +464,9 @@ describe('MemoriesScreen', () => {
 
   it('handles memory card press navigation', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       memories: mockMemories,
@@ -464,6 +494,9 @@ describe('MemoriesScreen', () => {
 
   it('formats dates correctly', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       memories: mockMemories,
@@ -520,6 +553,9 @@ describe('MemoriesScreen', () => {
     ];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       memories: mixedMemories,
@@ -546,6 +582,9 @@ describe('MemoriesScreen', () => {
 
   it('renders FlatList correctly with data', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       memories: mockMemories,
@@ -573,6 +612,9 @@ describe('MemoriesScreen', () => {
 
   it('handles memory reviews display', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       memories: mockMemories,
@@ -600,6 +642,9 @@ describe('MemoriesScreen', () => {
 
   it('handles navigation to MemoryDetail on card press', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: mockMemories,
       artists: [],
       liveEvents: [],
@@ -626,6 +671,9 @@ describe('MemoriesScreen', () => {
 
   it('handles navigation to MemoryForm on add button press', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: [],
       artists: [],
       liveEvents: [],
@@ -650,6 +698,9 @@ describe('MemoriesScreen', () => {
 
   it('formats date correctly', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: mockMemories,
       artists: [],
       liveEvents: [],
@@ -679,6 +730,9 @@ describe('MemoriesScreen', () => {
     }] as (Memory & { event_title: string; artist_name: string; event_date: string })[];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: memoriesWithoutPhotos,
       artists: [],
       liveEvents: [],
@@ -708,6 +762,9 @@ describe('MemoriesScreen', () => {
     }] as (Memory & { event_title: string; artist_name: string; event_date: string })[];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: memoriesWithEmptyPhotos,
       artists: [],
       liveEvents: [],
@@ -732,6 +789,9 @@ describe('MemoriesScreen', () => {
 
   it('tests formatDate function directly', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: mockMemories,
       artists: [],
       liveEvents: [],
@@ -771,6 +831,9 @@ describe('MemoriesScreen', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: [memoryWithPhotos] as any,
       artists: [],
       liveEvents: [],
@@ -804,6 +867,9 @@ describe('MemoriesScreen', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: [memoryWithInvalidPhotos] as any,
       artists: [],
       liveEvents: [],
@@ -847,6 +913,9 @@ describe('MemoriesScreen', () => {
     ];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: multipleMemories as any,
       artists: [],
       liveEvents: [],
@@ -878,6 +947,9 @@ describe('MemoriesScreen', () => {
   it('tests empty state vs FlatList conditional rendering', () => {
     // 空の状態をテスト
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: [],
       artists: [],
       liveEvents: [],
@@ -903,6 +975,9 @@ describe('MemoriesScreen', () => {
 
   it('tests ScrollView configuration properties', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: mockMemories,
       artists: [],
       liveEvents: [],
@@ -935,6 +1010,9 @@ describe('MemoriesScreen', () => {
     ] as (Memory & { event_title: string; artist_name: string; event_date: string })[];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: memoriesWithNullPhotos,
       artists: [],
       liveEvents: [],
@@ -965,6 +1043,9 @@ describe('MemoriesScreen', () => {
     ] as any;
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: memoriesWithInvalidPhotos,
       artists: [],
       liveEvents: [],
@@ -994,6 +1075,9 @@ describe('MemoriesScreen', () => {
     ] as any;
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: memoriesWithoutSetlist,
       artists: [],
       liveEvents: [],
@@ -1024,6 +1108,9 @@ describe('MemoriesScreen', () => {
     ] as any;
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: memoriesWithoutReview,
       artists: [],
       liveEvents: [],
@@ -1047,6 +1134,9 @@ describe('MemoriesScreen', () => {
 
   it('handles SafeAreaView edges configuration', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: mockMemories,
       artists: [],
       liveEvents: [],
@@ -1070,6 +1160,9 @@ describe('MemoriesScreen', () => {
 
   it('tests ScrollView configuration', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: mockMemories,
       artists: [],
       liveEvents: [],
@@ -1093,6 +1186,9 @@ describe('MemoriesScreen', () => {
 
   it('tests FlatList configuration with scrollEnabled false', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: mockMemories,
       artists: [],
       liveEvents: [],
@@ -1117,6 +1213,9 @@ describe('MemoriesScreen', () => {
   it('tests formatDate function with various date formats', () => {
     // formatDate関数の詳細なテスト
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: [
         {
           ...mockMemories[0],
@@ -1153,6 +1252,9 @@ describe('MemoriesScreen', () => {
     ] as (Memory & { event_title: string; artist_name: string; event_date: string })[];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: memoriesWithPhotosArray,
       artists: [],
       liveEvents: [],
@@ -1183,6 +1285,9 @@ describe('MemoriesScreen', () => {
     ] as (Memory & { event_title: string; artist_name: string; event_date: string })[];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: memoriesWithSinglePhoto,
       artists: [],
       liveEvents: [],
@@ -1206,6 +1311,9 @@ describe('MemoriesScreen', () => {
   it('tests navigation.navigate call in renderMemory', () => {
     // メモリーカードタップでナビゲーションが呼ばれることをテスト
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: mockMemories,
       artists: [],
       liveEvents: [],
@@ -1231,6 +1339,9 @@ describe('MemoriesScreen', () => {
   it('tests FlatList keyExtractor function', () => {
     // keyExtractor関数の動作をテスト
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: mockMemories,
       artists: [],
       liveEvents: [],
@@ -1265,6 +1376,9 @@ describe('MemoriesScreen', () => {
     ] as any;
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: memoriesWithBothFields,
       artists: [],
       liveEvents: [],
@@ -1293,6 +1407,9 @@ describe('MemoriesScreen', () => {
       
       // formatDate関数が呼び出されるように、実際のデータでテスト
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         memories: [
           {
             id: '1',
@@ -1337,6 +1454,9 @@ describe('MemoriesScreen', () => {
 
       testDates.forEach(dateString => {
         mockUseApp.mockReturnValue({
+          isSyncing: false,
+          lastSyncAt: null,
+          syncWithServer: jest.fn().mockResolvedValue({ success: true }),
           memories: [
             {
               id: '1',
@@ -1392,6 +1512,9 @@ describe('MemoriesScreen', () => {
       };
 
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         memories: [memoryWithPhotos],
         artists: [],
         liveEvents: [],
@@ -1437,6 +1560,9 @@ describe('MemoriesScreen', () => {
       };
 
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         memories: [memoryWithoutPhotos],
         artists: [],
         liveEvents: [],
@@ -1474,6 +1600,9 @@ describe('MemoriesScreen', () => {
       };
 
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         memories: [memoryWithInvalidPhotos],
         artists: [],
         liveEvents: [],
@@ -1518,6 +1647,9 @@ describe('MemoriesScreen', () => {
   describe('Empty State vs FlatList Rendering', () => {
     it('shows empty state when no memories', () => {
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         memories: [],
         artists: [],
         liveEvents: [],
@@ -1571,6 +1703,9 @@ describe('MemoriesScreen', () => {
       ];
 
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         memories: memoriesData,
         artists: [],
         liveEvents: [],
@@ -1611,6 +1746,9 @@ describe('MemoriesScreen', () => {
       };
 
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         memories: [fullMemory],
         artists: [],
         liveEvents: [],
@@ -1647,6 +1785,9 @@ describe('MemoriesScreen', () => {
       };
 
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         memories: [minimalMemory],
         artists: [],
         liveEvents: [],

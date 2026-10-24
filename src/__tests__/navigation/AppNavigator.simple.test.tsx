@@ -81,6 +81,9 @@ describe('AppNavigator', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: [],
@@ -231,6 +234,9 @@ describe('AppNavigator', () => {
 
     it('works with populated app state', () => {
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         artists: [{ id: '1', name: 'Test Artist', website: '', social_media: '', created_at: '', updated_at: '', sync_status: 'synced' as const }],
         liveEvents: [{ id: '1', title: 'Test Event', date: '2024-01-01', venue_name: 'Test Venue', artist_id: '1', artist_name: 'Test Artist', created_at: '', updated_at: '', sync_status: 'synced' as const }],
         upcomingEvents: [],

@@ -59,6 +59,9 @@ describe('MemoriesScreen Function Coverage Tests', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: [memoryData],
       artists: [],
       liveEvents: [],
@@ -109,6 +112,9 @@ describe('MemoriesScreen Function Coverage Tests', () => {
       };
 
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         memories: [memoryData],
         artists: [],
         liveEvents: [],
@@ -171,6 +177,9 @@ describe('MemoriesScreen Function Coverage Tests', () => {
       };
 
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         memories: [memoryData],
         artists: [],
         liveEvents: [],
@@ -237,6 +246,9 @@ describe('MemoriesScreen Function Coverage Tests', () => {
       };
 
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         memories: [memoryData],
         artists: [],
         liveEvents: [],
@@ -307,6 +319,9 @@ describe('MemoriesScreen Function Coverage Tests', () => {
     ];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: multipleMemories,
       artists: [],
       liveEvents: [],

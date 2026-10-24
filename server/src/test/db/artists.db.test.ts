@@ -9,10 +9,9 @@ let app: any; // FastifyInstance だが動的 import 後に型付け
 let buildFn: any;
 let accessToken: string;
 let pgContainer: any = null; // StartedPostgreSqlContainer | null (dynamic import)
-let skipSuite = false;
 
 
-describe('Artists API (real DB)', () => {
+describe.skipIf(!process.env.DATABASE_URL && process.env.RUN_DB_TESTS !== 'true')('Artists API (real DB)', () => {
   beforeAll(async () => {
     process.env.SKIP_DB = 'false';
     process.env.MOCK_GOOGLE = 'true';
@@ -21,7 +20,7 @@ describe('Artists API (real DB)', () => {
     // 動的に Postgres コンテナを起動（DATABASE_URL 未指定の場合）
     if (!process.env.DATABASE_URL) {
       try {
-        const mod = await import('testcontainers');
+        const mod = await import('@testcontainers/postgresql');
         const { PostgreSqlContainer } = mod as any;
         pgContainer = await new PostgreSqlContainer().start();
         const username = pgContainer.getUsername();
@@ -30,19 +29,14 @@ describe('Artists API (real DB)', () => {
         const port = pgContainer.getPort();
         const database = pgContainer.getDatabase();
         process.env.DATABASE_URL = `postgresql://${username}:${password}@${host}:${port}/${database}`;
-      } catch (e) {
-        // testcontainers 利用不可 (モジュール未導入 or Docker 未起動) の場合スキップ
-        console.warn('[artists.db.test] testcontainers 未利用のため統合テストをスキップします:', (e as any)?.message);
-        skipSuite = true;
-        return;
+      } catch (error) {
+        throw new Error('Real DB tests require DATABASE_URL or a working PostgreSQL testcontainer', { cause: error });
       }
     }
 
-  if (skipSuite) return; // スキップ決定時は以降実行しない
-
   // Prisma スキーマ適用（db push を利用して高速化）
-  try { execSync('npx prisma db push --skip-generate', { stdio: 'ignore' }); } catch {}
-  try { execSync('npx prisma generate', { stdio: 'ignore' }); } catch {}
+  execSync('npx prisma db push --skip-generate', { stdio: 'ignore' });
+  execSync('npx prisma generate', { stdio: 'ignore' });
 
   // 環境変数設定後に build を読み込む（PrismaClient 初期化前に DATABASE_URL が必要）
   const mod = await import('../../index.js');
@@ -63,10 +57,6 @@ describe('Artists API (real DB)', () => {
   });
 
   it('creates, lists, updates and deletes an artist', async () => {
-    if (skipSuite) {
-      // 環境未準備（DATABASE_URL なし & testcontainers 利用不可）のためスキップ
-      return;
-    }
     // create
     const createRes = await app.inject({
       method: 'POST',

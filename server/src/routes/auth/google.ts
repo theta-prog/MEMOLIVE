@@ -9,7 +9,7 @@ const bodySchema = z.object({ idToken: z.string().min(10) });
 export async function authGoogleRoute(app: FastifyInstance) {
   app.post('/v1/auth/google', { schema: { body: { type: 'object', properties: { idToken: { type: 'string' } } } } }, async (req, reply) => {
     const parsed = bodySchema.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ code: 'VALIDATION_ERROR', errors: parsed.error.errors });
+    if (!parsed.success) return reply.code(400).send({ code: 'VALIDATION_ERROR', errors: parsed.error.issues });
 
     // Progress logging (for development debugging)
     req.log.info({ mock: process.env.MOCK_GOOGLE, skipDb: process.env.SKIP_DB }, 'auth.google:start');
@@ -54,52 +54,24 @@ export async function authGoogleRoute(app: FastifyInstance) {
     }
   });
 
-  // Refresh endpoint
+  // The opaque refresh token identifies its owner; an expired access token is unnecessary.
+  const refreshBody = z.object({ refreshToken: z.string().min(1).max(512) });
+
   app.post('/v1/auth/refresh', async (req, reply) => {
-    const body: any = req.body || {};
-    const { refreshToken } = body;
-    if (!refreshToken || typeof refreshToken !== 'string') {
-      return reply.code(400).send({ code: 'VALIDATION_ERROR' });
-    }
-
-    // Development bypass for guest login
-    // console.log('Refresh Debug:', { env: process.env.NODE_ENV, token: refreshToken });
-    if (process.env.NODE_ENV === 'development' && refreshToken === 'dummy_refresh_token') {
-      return reply.send({
-        accessToken: 'dummy_access_token',
-        refreshToken: 'dummy_refresh_token',
-        refreshExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-      });
-    }
-
-    // decode old access token if provided to get userId fallback
-    const auth = (req.headers.authorization || '').split(' ')[1];
-    let userId: string | null = null;
-    if (auth) {
-      try { userId = (app.jwt.decode(auth) as any)?.sub; } catch {}
-    }
-    if (!userId) {
-      // require client to also send userId? we keep simple: attempt rotation for mock user if skipDb
-      if (process.env.SKIP_DB === 'true') userId = 'mock-user-id';
-    }
-    if (!userId) return reply.code(401).send({ code: 'UNAUTHORIZED' });
-    const rotated = await rotateRefreshToken(refreshToken, userId);
+    const parsed = refreshBody.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ code: 'VALIDATION_ERROR' });
+    const rotated = await rotateRefreshToken(parsed.data.refreshToken);
     if (!rotated) return reply.code(401).send({ code: 'INVALID_REFRESH' });
-    const newAccess = app.jwt.sign({ sub: userId });
-    return reply.send({ accessToken: newAccess, refreshToken: rotated.token, refreshExpiresAt: rotated.expiresAt });
+    return reply.send({
+      accessToken: app.jwt.sign({ sub: rotated.userId }),
+      refreshToken: rotated.token,
+      refreshExpiresAt: rotated.expiresAt,
+    });
   });
 
   app.post('/v1/auth/logout', async (req, reply) => {
-    const body: any = req.body || {};
-    const { refreshToken } = body;
-    if (!refreshToken) return reply.code(400).send({ code: 'VALIDATION_ERROR' });
-    // optional user id from access token
-    let userId: string | null = null;
-    const auth = (req.headers.authorization || '').split(' ')[1];
-    if (auth) { try { userId = (app.jwt.decode(auth) as any)?.sub; } catch {} }
-    if (!userId && process.env.SKIP_DB === 'true') userId = 'mock-user-id';
-    if (!userId) return reply.code(401).send({ code: 'UNAUTHORIZED' });
-    const ok = await revokeRefreshToken(refreshToken, userId);
-    return reply.send({ revoked: ok });
+    const parsed = refreshBody.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ code: 'VALIDATION_ERROR' });
+    return reply.send({ revoked: await revokeRefreshToken(parsed.data.refreshToken) });
   });
 }

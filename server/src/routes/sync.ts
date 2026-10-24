@@ -17,7 +17,7 @@ export async function syncRoutes(app: FastifyInstance) {
 
   app.post('/v1/sync', { preValidation: [auth] }, async (req: any, reply) => {
     const parsed = syncRequestSchema.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ code: 'VALIDATION_ERROR', errors: parsed.error.errors });
+    if (!parsed.success) return reply.code(400).send({ code: 'VALIDATION_ERROR', errors: parsed.error.issues });
 
     if (skipDb) {
       return {

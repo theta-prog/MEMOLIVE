@@ -21,6 +21,9 @@ describe('MemoriesScreen Coverage Focused Tests', () => {
 
   it('renders add button and handles navigation', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: [],
       artists: [],
       liveEvents: [],
@@ -47,6 +50,9 @@ describe('MemoriesScreen Coverage Focused Tests', () => {
 
   it('shows empty state with no memories', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: [],
       artists: [],
       liveEvents: [],
@@ -87,6 +93,9 @@ describe('MemoriesScreen Coverage Focused Tests', () => {
     ];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: memoriesData,
       artists: [],
       liveEvents: [],
@@ -146,6 +155,9 @@ describe('MemoriesScreen Coverage Focused Tests', () => {
       };
 
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         memories: [memory],
         artists: [],
         liveEvents: [],
@@ -208,6 +220,9 @@ describe('MemoriesScreen Coverage Focused Tests', () => {
       };
 
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         memories: [memory],
         artists: [],
         liveEvents: [],
@@ -253,6 +268,9 @@ describe('MemoriesScreen Coverage Focused Tests', () => {
       };
 
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         memories: [memory],
         artists: [],
         liveEvents: [],
@@ -319,6 +337,9 @@ describe('MemoriesScreen Coverage Focused Tests', () => {
     ];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: multipleMemories,
       artists: [],
       liveEvents: [],
@@ -355,6 +376,9 @@ describe('MemoriesScreen Coverage Focused Tests', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       memories: [memory],
       artists: [],
       liveEvents: [],

@@ -75,6 +75,9 @@ describe('LiveEventDetailScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: mockLiveEvents,
       upcomingEvents: [],
@@ -181,6 +184,9 @@ describe('LiveEventDetailScreen', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: [],
       artists: [],
       liveEvents: [futureEvent],
@@ -215,6 +221,9 @@ describe('LiveEventDetailScreen', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: [],
       artists: [],
       liveEvents: [pastEvent],
@@ -246,6 +255,9 @@ describe('LiveEventDetailScreen', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: [],
       artists: [],
       liveEvents: [eventWithTicketStatus],
@@ -275,6 +287,9 @@ describe('LiveEventDetailScreen', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: [],
       artists: [],
       liveEvents: [eventWithPrice],
@@ -307,6 +322,9 @@ describe('LiveEventDetailScreen', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: [],
       artists: [],
       liveEvents: [eventWithVenue],
@@ -333,6 +351,9 @@ describe('LiveEventDetailScreen', () => {
 
   it('tests memory creation when no memory exists', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: [],
       artists: [],
       liveEvents: [mockLiveEvents[0]!],

@@ -232,6 +232,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         }
       };
     }
+    return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]); // isAuthenticatedの変更時のみ実行
 

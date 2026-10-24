@@ -57,15 +57,15 @@ describe('AppContext', () => {
     mockDatabase.getAllArtists.mockResolvedValue([]);
     mockDatabase.getLiveEventsWithArtists.mockResolvedValue([]);
     mockDatabase.getMemoriesWithEventDetails.mockResolvedValue([]);
-    mockDatabase.createArtist.mockResolvedValue('1');
-    mockDatabase.updateArtist.mockResolvedValue(true);
-    mockDatabase.deleteArtist.mockResolvedValue(true);
-    mockDatabase.createLiveEvent.mockResolvedValue('1');
-    mockDatabase.updateLiveEvent.mockResolvedValue(true);
-    mockDatabase.deleteLiveEvent.mockResolvedValue(true);
-    mockDatabase.createMemory.mockResolvedValue('1');
-    mockDatabase.updateMemory.mockResolvedValue(true);
-    mockDatabase.deleteMemory.mockResolvedValue(true);
+    mockDatabase.createArtist.mockResolvedValue({ id: '1', created_at: '2024-01-01T00:00:00.000Z', updated_at: '2024-01-01T00:00:00.000Z', sync_status: 'synced', name: 'Test Artist' });
+    mockDatabase.updateArtist.mockResolvedValue(undefined);
+    mockDatabase.deleteArtist.mockResolvedValue(undefined);
+    mockDatabase.createLiveEvent.mockResolvedValue({ id: '1', created_at: '2024-01-01T00:00:00.000Z', updated_at: '2024-01-01T00:00:00.000Z', sync_status: 'synced', title: 'Test Concert', artist_id: '1', date: '2024-12-25', venue_name: 'Test Venue' });
+    mockDatabase.updateLiveEvent.mockResolvedValue(undefined);
+    mockDatabase.deleteLiveEvent.mockResolvedValue(undefined);
+    mockDatabase.createMemory.mockResolvedValue({ id: '1', created_at: '2024-01-01T00:00:00.000Z', updated_at: '2024-01-01T00:00:00.000Z', sync_status: 'synced', live_event_id: '1' });
+    mockDatabase.updateMemory.mockResolvedValue(undefined);
+    mockDatabase.deleteMemory.mockResolvedValue(undefined);
   });
 
   it('provides context values correctly', async () => {

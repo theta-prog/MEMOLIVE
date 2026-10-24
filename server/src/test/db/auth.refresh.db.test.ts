@@ -6,9 +6,8 @@ let buildFn: any;
 let accessToken: string;
 let refreshToken: string;
 let pgContainer: any = null;
-let skipSuite = false;
 
-describe('Auth Refresh API (real DB)', () => {
+describe.skipIf(!process.env.DATABASE_URL && process.env.RUN_DB_TESTS !== 'true')('Auth Refresh API (real DB)', () => {
   beforeAll(async () => {
     process.env.SKIP_DB = 'false';
     process.env.MOCK_GOOGLE = 'true';
@@ -16,7 +15,7 @@ describe('Auth Refresh API (real DB)', () => {
 
     if (!process.env.DATABASE_URL) {
       try {
-        const mod = await import('testcontainers');
+        const mod = await import('@testcontainers/postgresql');
         const { PostgreSqlContainer } = mod as any;
         pgContainer = await new PostgreSqlContainer().start();
         const username = pgContainer.getUsername();
@@ -25,15 +24,13 @@ describe('Auth Refresh API (real DB)', () => {
         const port = pgContainer.getPort();
         const database = pgContainer.getDatabase();
         process.env.DATABASE_URL = `postgresql://${username}:${password}@${host}:${port}/${database}`;
-      } catch (e) {
-        console.warn('[auth.refresh.db.test] testcontainers unavailable, skipping suite:', (e as any)?.message);
-        skipSuite = true;
-        return;
+      } catch (error) {
+        throw new Error('Real DB tests require DATABASE_URL or a working PostgreSQL testcontainer', { cause: error });
       }
     }
 
-    try { execSync('npx prisma db push --skip-generate', { stdio: 'ignore' }); } catch {}
-    try { execSync('npx prisma generate', { stdio: 'ignore' }); } catch {}
+    execSync('npx prisma db push --skip-generate', { stdio: 'ignore' });
+    execSync('npx prisma generate', { stdio: 'ignore' });
 
     const mod = await import('../../index.js');
     buildFn = mod.build;
@@ -52,7 +49,6 @@ describe('Auth Refresh API (real DB)', () => {
   });
 
   it('rotates refresh token and revokes old one', async () => {
-    if (skipSuite) return;
 
     // Rotate
     const rotateRes = await app.inject({
@@ -79,7 +75,6 @@ describe('Auth Refresh API (real DB)', () => {
   });
 
   it('revokes token on logout', async () => {
-    if (skipSuite) return;
 
     // Logout
     const logoutRes = await app.inject({
@@ -98,4 +93,22 @@ describe('Auth Refresh API (real DB)', () => {
     });
     expect(failRes.statusCode).toBe(401);
   });
+  it('allows exactly one concurrent rotation of a refresh token', async () => {
+    const login = await app.inject({ method: 'POST', url: '/v1/auth/google', payload: { idToken: 'mock-token' } });
+    expect(login.statusCode).toBe(200);
+    const token = login.json().refreshToken;
+    const results = await Promise.all([0, 1].map(() =>
+      app.inject({ method: 'POST', url: '/v1/auth/refresh', payload: { refreshToken: token } })
+    ));
+    expect(results.map((result: any) => result.statusCode).sort()).toEqual([200, 401]);
+  });
+
+  it('rejects a refresh token that is not stored', async () => {
+    const response = await app.inject({
+      method: 'POST', url: '/v1/auth/refresh',
+      payload: { refreshToken: 'not-an-issued-refresh-token' },
+    });
+    expect(response.statusCode).toBe(401);
+  });
+
 });

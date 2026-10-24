@@ -101,6 +101,9 @@ describe('MemoryFormScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: mockLiveEvents,
       upcomingEvents: [],
@@ -122,6 +125,9 @@ describe('MemoryFormScreen', () => {
     beforeEach(() => {
       // For new memory tests, clear the memories so no existing memory for eventId: '1'
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         artists: [],
         liveEvents: mockLiveEvents,
         upcomingEvents: [],
@@ -245,6 +251,9 @@ describe('MemoryFormScreen', () => {
     beforeEach(() => {
       // For form validation tests, clear the memories so it's in new memory mode
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         artists: [],
         liveEvents: mockLiveEvents,
         upcomingEvents: [],
@@ -349,6 +358,9 @@ describe('MemoryFormScreen', () => {
     beforeEach(() => {
       // For validation tests, clear the memories so it's in new memory mode
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         artists: [],
         liveEvents: mockLiveEvents,
         upcomingEvents: [],

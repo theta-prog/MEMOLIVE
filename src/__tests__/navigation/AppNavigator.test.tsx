@@ -130,6 +130,9 @@ jest.mock('../../screens/MemoryDetailScreen', () => {
 describe('AppNavigator', () => {
   beforeEach(() => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: [],

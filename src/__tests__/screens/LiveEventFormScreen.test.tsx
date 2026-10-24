@@ -61,6 +61,9 @@ describe('LiveEventFormScreen', () => {
     jest.clearAllMocks();
     
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: mockArtists,
       liveEvents: [],
       upcomingEvents: [],
@@ -177,6 +180,9 @@ describe('LiveEventFormScreen', () => {
     ];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: mockArtists,
       liveEvents: mockLiveEvents,
       upcomingEvents: [],
@@ -211,6 +217,9 @@ describe('LiveEventFormScreen', () => {
 
   it('shows error when artist is not selected', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: mockArtists,
       upcomingEvents: [],
       liveEvents: [],
@@ -248,6 +257,9 @@ describe('LiveEventFormScreen', () => {
 
   it('shows error when venue name is empty', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: mockArtists,
       upcomingEvents: [],
       liveEvents: [],
@@ -280,6 +292,9 @@ describe('LiveEventFormScreen', () => {
 
   it('handles additional form fields correctly', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: mockArtists,
       upcomingEvents: [],
       liveEvents: [],
@@ -317,6 +332,9 @@ describe('LiveEventFormScreen', () => {
   it('handles form field trimming correctly', () => {
     const mockAddLiveEvent = jest.fn();
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: mockArtists,
       upcomingEvents: [],
       liveEvents: [],

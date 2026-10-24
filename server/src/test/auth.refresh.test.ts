@@ -15,8 +15,8 @@ describe('Auth Refresh / Logout (skipDb)', () => {
   });
   afterAll(async () => { await app.close(); });
 
-  it('refreshes tokens', async () => {
-    const res = await app.inject({ method: 'POST', url: '/v1/auth/refresh', payload: { refreshToken }, headers: { Authorization: `Bearer ${accessToken}` } });
+  it('refreshes tokens without an access token', async () => {
+    const res = await app.inject({ method: 'POST', url: '/v1/auth/refresh', payload: { refreshToken } });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.accessToken).toBeTruthy();

@@ -42,7 +42,7 @@ export async function memoryRoutes(app: FastifyInstance) {
 
   app.post('/v1/memories', { preValidation: [auth] }, async (req: any, reply) => {
     const parsed = createSchema.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ code: 'VALIDATION_ERROR', errors: parsed.error.errors });
+    if (!parsed.success) return reply.code(400).send({ code: 'VALIDATION_ERROR', errors: parsed.error.issues });
     if (skipDb) return { id: 'mock-id', userId: req.user.sub, ...parsed.data };
     const userId = req.user.sub;
     const event = await prisma.liveEvent.findFirst({ where: { id: parsed.data.eventId, userId } });
@@ -57,7 +57,7 @@ export async function memoryRoutes(app: FastifyInstance) {
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params);
     if (!params.success) return reply.code(400).send({ code: 'INVALID_ID' });
     const body = updateSchema.safeParse(req.body);
-    if (!body.success) return reply.code(400).send({ code: 'VALIDATION_ERROR', errors: body.error.errors });
+    if (!body.success) return reply.code(400).send({ code: 'VALIDATION_ERROR', errors: body.error.issues });
     if (skipDb) return { id: params.data.id, ...body.data };
     const userId = req.user.sub;
     const existing = await prisma.memory.findFirst({ where: { id: params.data.id, userId } });

@@ -21,6 +21,9 @@ describe('ArtistsScreen Additional Coverage (navigation-based)', () => {
 
   it('「+」ボタンで ArtistForm に遷移する', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: [],
@@ -44,6 +47,9 @@ describe('ArtistsScreen Additional Coverage (navigation-based)', () => {
 
   it('編集ボタンで ArtistForm に artistId 付きで遷移する（FlatList未描画時はスキップ相当）', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [
         {
           id: '1',
@@ -84,6 +90,9 @@ describe('ArtistsScreen Additional Coverage (navigation-based)', () => {
 
   it('route.params.openAdd が true なら初回レンダー後に ArtistForm に遷移する', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: [],

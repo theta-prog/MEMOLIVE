@@ -5,10 +5,9 @@ let app: any;
 let buildFn: any;
 let accessToken: string;
 let pgContainer: any = null;
-let skipSuite = false;
 let eventId: string;
 
-describe('Memories API (real DB)', () => {
+describe.skipIf(!process.env.DATABASE_URL && process.env.RUN_DB_TESTS !== 'true')('Memories API (real DB)', () => {
   beforeAll(async () => {
     process.env.SKIP_DB = 'false';
     process.env.MOCK_GOOGLE = 'true';
@@ -16,7 +15,7 @@ describe('Memories API (real DB)', () => {
 
     if (!process.env.DATABASE_URL) {
       try {
-        const mod = await import('testcontainers');
+        const mod = await import('@testcontainers/postgresql');
         const { PostgreSqlContainer } = mod as any;
         pgContainer = await new PostgreSqlContainer().start();
         const username = pgContainer.getUsername();
@@ -25,15 +24,13 @@ describe('Memories API (real DB)', () => {
         const port = pgContainer.getPort();
         const database = pgContainer.getDatabase();
         process.env.DATABASE_URL = `postgresql://${username}:${password}@${host}:${port}/${database}`;
-      } catch (e) {
-        console.warn('[memories.db.test] testcontainers unavailable, skipping suite:', (e as any)?.message);
-        skipSuite = true;
-        return;
+      } catch (error) {
+        throw new Error('Real DB tests require DATABASE_URL or a working PostgreSQL testcontainer', { cause: error });
       }
     }
 
-    try { execSync('npx prisma db push --skip-generate', { stdio: 'ignore' }); } catch {}
-    try { execSync('npx prisma generate', { stdio: 'ignore' }); } catch {}
+    execSync('npx prisma db push --skip-generate', { stdio: 'ignore' });
+    execSync('npx prisma generate', { stdio: 'ignore' });
 
     const mod = await import('../../index.js');
     buildFn = mod.build;
@@ -43,7 +40,7 @@ describe('Memories API (real DB)', () => {
     accessToken = res.json().accessToken;
 
     // Create a prerequisite event
-    if (!skipSuite) {
+    {
       const eventRes = await app.inject({
         method: 'POST',
         url: '/v1/live-events',
@@ -60,7 +57,6 @@ describe('Memories API (real DB)', () => {
   });
 
   it('creates, lists, updates and deletes a memory', async () => {
-    if (skipSuite) return;
 
     // Create
     const payload = {

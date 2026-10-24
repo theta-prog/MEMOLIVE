@@ -73,6 +73,9 @@ describe('MemoryDetailScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: mockLiveEvents,
       upcomingEvents: [],
@@ -87,8 +90,8 @@ describe('MemoryDetailScreen', () => {
       updateMemory: jest.fn(),
       deleteMemory: jest.fn(),
       refreshData: jest.fn(),
-      getArtistSetlists: jest.fn().mockResolvedValue([]),
-      getLiveEventArtists: jest.fn().mockResolvedValue([]),
+
+
     });
   });
 
@@ -122,7 +125,7 @@ describe('MemoryDetailScreen', () => {
 
   it('shows error message when memory not found', () => {
     const invalidRoute = { params: { memoryId: '999' } };
-    
+
     const { getByText } = render(
       <MemoryDetailScreen navigation={mockNavigation} route={invalidRoute} />
     );
@@ -138,7 +141,7 @@ describe('MemoryDetailScreen', () => {
     // Look for back button (first TouchableOpacity in header)
     const touchableElements = getAllByTestId('TouchableOpacity');
     expect(touchableElements.length).toBeGreaterThan(0);
-    
+
     fireEvent.press(touchableElements[0]);
     expect(mockNavigation.goBack).toHaveBeenCalled();
   });
@@ -152,7 +155,7 @@ describe('MemoryDetailScreen', () => {
     // Order: [0] back, [1] share, [2] edit, [3] delete
     const touchableElements = getAllByTestId('TouchableOpacity');
     expect(touchableElements.length).toBeGreaterThan(2);
-    
+
     // Press the edit button (index 2)
     fireEvent.press(touchableElements[2]);
     expect(mockNavigation.navigate).toHaveBeenCalledWith('MemoryForm', {
@@ -170,7 +173,7 @@ describe('MemoryDetailScreen', () => {
     // Order: [0] back, [1] share, [2] edit, [3] delete
     const touchableElements = getAllByTestId('TouchableOpacity');
     expect(touchableElements.length).toBeGreaterThan(3);
-    
+
     // Press the delete button (index 3)
     fireEvent.press(touchableElements[3]);
     expect(Alert.alert).toHaveBeenCalledWith(
@@ -199,6 +202,9 @@ describe('MemoryDetailScreen', () => {
     ];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: mockLiveEvents,
       upcomingEvents: [],
@@ -213,8 +219,8 @@ describe('MemoryDetailScreen', () => {
       updateMemory: jest.fn(),
       deleteMemory: jest.fn(),
       refreshData: jest.fn(),
-      getArtistSetlists: jest.fn().mockResolvedValue([]),
-      getLiveEventArtists: jest.fn().mockResolvedValue([]),
+
+
     });
 
     const { getAllByText } = render(
@@ -233,6 +239,9 @@ describe('MemoryDetailScreen', () => {
     ];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: mockLiveEvents,
       upcomingEvents: [],
@@ -247,8 +256,8 @@ describe('MemoryDetailScreen', () => {
       updateMemory: jest.fn(),
       deleteMemory: jest.fn(),
       refreshData: jest.fn(),
-      getArtistSetlists: jest.fn().mockResolvedValue([]),
-      getLiveEventArtists: jest.fn().mockResolvedValue([]),
+
+
     });
 
     const { getAllByText } = render(
@@ -260,8 +269,11 @@ describe('MemoryDetailScreen', () => {
 
   it('calls deleteMemory when delete is confirmed', () => {
     const mockDeleteMemory = jest.fn();
-    
+
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: mockLiveEvents,
       upcomingEvents: [],
@@ -276,8 +288,8 @@ describe('MemoryDetailScreen', () => {
       updateMemory: jest.fn(),
       deleteMemory: mockDeleteMemory,
       refreshData: jest.fn(),
-      getArtistSetlists: jest.fn().mockResolvedValue([]),
-      getLiveEventArtists: jest.fn().mockResolvedValue([]),
+
+
     });
 
     const { getAllByTestId } = render(

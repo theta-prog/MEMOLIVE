@@ -63,6 +63,9 @@ describe('HomeScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: mockUpcomingEvents,
@@ -100,6 +103,9 @@ describe('HomeScreen', () => {
 
   it('displays empty state when no events', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: [],
@@ -221,6 +227,9 @@ describe('HomeScreen', () => {
     ];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: multipleEvents,
@@ -256,6 +265,9 @@ describe('HomeScreen', () => {
     }] as any[];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: futureEvents,
       artists: [],
       liveEvents: [],
@@ -280,6 +292,9 @@ describe('HomeScreen', () => {
 
   it('formats date correctly in Japanese locale', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: mockUpcomingEvents,
       artists: [],
       liveEvents: [],
@@ -330,6 +345,9 @@ describe('HomeScreen', () => {
     ] as any[];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: multipleEvents,
       artists: [],
       liveEvents: [],
@@ -355,6 +373,9 @@ describe('HomeScreen', () => {
 
   it('handles navigation to event detail from countdown', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: mockUpcomingEvents,
       artists: [],
       liveEvents: [],
@@ -380,6 +401,9 @@ describe('HomeScreen', () => {
 
   it('handles quick actions navigation', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: [],
       artists: [],
       liveEvents: [],
@@ -420,6 +444,9 @@ describe('HomeScreen', () => {
     } as any;
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: [pastEvent],
@@ -455,6 +482,9 @@ describe('HomeScreen', () => {
     } as any;
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: [futureEvent],
@@ -511,6 +541,9 @@ describe('HomeScreen', () => {
     ] as any;
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: multipleEvents,
@@ -620,6 +653,9 @@ describe('HomeScreen', () => {
     ] as any;
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: manyEvents,
@@ -661,6 +697,9 @@ describe('HomeScreen', () => {
     ] as any;
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: multipleEvents,
@@ -709,6 +748,9 @@ describe('HomeScreen', () => {
     ] as any;
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: multipleEvents,
@@ -749,6 +791,9 @@ describe('HomeScreen - additional coverage', () => {
 
   it('navigates via quick action buttons', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: [],
       artists: [],
       liveEvents: [],
@@ -782,6 +827,9 @@ describe('HomeScreen - additional coverage', () => {
 
   it('renders header title and subtitle', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: [],
       artists: [],
       liveEvents: [],
@@ -834,6 +882,9 @@ describe('HomeScreen - additional coverage', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: [event],
       artists: [],
       liveEvents: [],
@@ -887,6 +938,9 @@ describe('HomeScreen - additional coverage', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: [pastEvent],
       artists: [],
       liveEvents: [],
@@ -923,6 +977,9 @@ describe('HomeScreen - additional coverage', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: [event],
       artists: [],
       liveEvents: [],
@@ -953,6 +1010,9 @@ describe('HomeScreen - additional coverage', () => {
     ] as any[];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: events,
       artists: [],
       liveEvents: [],
@@ -986,6 +1046,9 @@ describe('HomeScreen - additional coverage', () => {
     ] as any[];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: events,
       artists: [],
       liveEvents: [],

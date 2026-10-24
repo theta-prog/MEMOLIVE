@@ -63,6 +63,9 @@ describe('CalendarScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: mockLiveEvents,
       upcomingEvents: [],
@@ -135,6 +138,9 @@ describe('CalendarScreen', () => {
 
   it('shows empty state when no events for selected date', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: [],
@@ -189,6 +195,9 @@ describe('CalendarScreen', () => {
     ];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: eventsOnSameDate,
       upcomingEvents: [],
@@ -238,6 +247,9 @@ describe('CalendarScreen', () => {
     };
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: [mockEvent],
       artists: [],
       liveEvents: [mockEvent],
@@ -285,6 +297,9 @@ describe('CalendarScreen', () => {
     ];
 
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       upcomingEvents: mockEvents,
       artists: [],
       liveEvents: mockEvents,

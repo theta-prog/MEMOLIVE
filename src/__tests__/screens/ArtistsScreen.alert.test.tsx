@@ -20,6 +20,9 @@ describe('ArtistsScreen Alert Tests (navigation-based)', () => {
 
   it('「+」ボタン押下で ArtistForm 遷移を呼ぶ（バリデーションはArtistFormで別途検証）', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: [],

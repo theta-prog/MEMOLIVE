@@ -5,9 +5,8 @@ let app: any;
 let buildFn: any;
 let accessToken: string;
 let pgContainer: any = null;
-let skipSuite = false;
 
-describe('Sync API (real DB)', () => {
+describe.skipIf(!process.env.DATABASE_URL && process.env.RUN_DB_TESTS !== 'true')('Sync API (real DB)', () => {
   beforeAll(async () => {
     process.env.SKIP_DB = 'false';
     process.env.MOCK_GOOGLE = 'true';
@@ -15,7 +14,7 @@ describe('Sync API (real DB)', () => {
 
     if (!process.env.DATABASE_URL) {
       try {
-        const mod = await import('testcontainers');
+        const mod = await import('@testcontainers/postgresql');
         const { PostgreSqlContainer } = mod as any;
         pgContainer = await new PostgreSqlContainer().start();
         const username = pgContainer.getUsername();
@@ -24,15 +23,13 @@ describe('Sync API (real DB)', () => {
         const port = pgContainer.getPort();
         const database = pgContainer.getDatabase();
         process.env.DATABASE_URL = `postgresql://${username}:${password}@${host}:${port}/${database}`;
-      } catch (e) {
-        console.warn('[sync.db.test] testcontainers unavailable, skipping suite:', (e as any)?.message);
-        skipSuite = true;
-        return;
+      } catch (error) {
+        throw new Error('Real DB tests require DATABASE_URL or a working PostgreSQL testcontainer', { cause: error });
       }
     }
 
-    try { execSync('npx prisma db push --skip-generate', { stdio: 'ignore' }); } catch {}
-    try { execSync('npx prisma generate', { stdio: 'ignore' }); } catch {}
+    execSync('npx prisma db push --skip-generate', { stdio: 'ignore' });
+    execSync('npx prisma generate', { stdio: 'ignore' });
 
     const mod = await import('../../index.js');
     buildFn = mod.build;
@@ -48,7 +45,6 @@ describe('Sync API (real DB)', () => {
   });
 
   it('applies client changes and returns server changes', async () => {
-    if (skipSuite) return;
 
     const artistId = '11111111-1111-1111-1111-111111111111';
     const clientChanges = {

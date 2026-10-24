@@ -40,6 +40,9 @@ describe('ArtistsScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: mockArtists,
       liveEvents: [],
       upcomingEvents: [],
@@ -68,6 +71,9 @@ describe('ArtistsScreen', () => {
 
   it('空の状態が正しく表示される', () => {
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: [],
       liveEvents: [],
       upcomingEvents: [],
@@ -168,6 +174,9 @@ describe('ArtistsScreen', () => {
   it('アーティスト削除機能が動作する', () => {
     const mockDeleteArtist = jest.fn();
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: mockArtists,
       liveEvents: [],
       upcomingEvents: [],
@@ -202,6 +211,9 @@ describe('ArtistsScreen', () => {
   it('リフレッシュ機能が動作する', () => {
     const mockRefreshData = jest.fn();
     mockUseApp.mockReturnValue({
+      isSyncing: false,
+      lastSyncAt: null,
+      syncWithServer: jest.fn().mockResolvedValue({ success: true }),
       artists: mockArtists,
       liveEvents: [],
       upcomingEvents: [],
@@ -312,6 +324,9 @@ describe('ArtistsScreen', () => {
       }));
 
       mockUseApp.mockReturnValue({
+        isSyncing: false,
+        lastSyncAt: null,
+        syncWithServer: jest.fn().mockResolvedValue({ success: true }),
         artists: manyArtists,
         liveEvents: [],
         upcomingEvents: [],
